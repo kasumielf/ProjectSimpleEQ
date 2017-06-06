@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Session">
+      <UniqueIdentifier>{78357224-968e-4e75-93c7-4ec539cdbe66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{fce1df5e-e404-42a3-b3bf-cb57de384011}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Timer">
+      <UniqueIdentifier>{eea75edf-bdf5-4d88-8162-67e0d3005ab2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Struct">
+      <UniqueIdentifier>{a3dfd4b6-4b8e-4981-b0b4-846fff17be29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Define">
+      <UniqueIdentifier>{4d78a3c3-a15f-4682-bb8e-ca9416be653f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BaseServer.h" />
+    <ClInclude Include="BaseSession.h">
+      <Filter>Session</Filter>
+    </ClInclude>
+    <ClInclude Include="OverlappedEx.h">
+      <Filter>Struct</Filter>
+    </ClInclude>
+    <ClInclude Include="IOCPOpType.h">
+      <Filter>Define</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonDefines.h">
+      <Filter>Define</Filter>
+    </ClInclude>
+    <ClInclude Include="TimerEventManager.h">
+      <Filter>Timer</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BaseServer.cpp" />
+    <ClCompile Include="BaseSession.cpp">
+      <Filter>Session</Filter>
+    </ClCompile>
+    <ClCompile Include="TimerEventManager.cpp">
+      <Filter>Timer</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

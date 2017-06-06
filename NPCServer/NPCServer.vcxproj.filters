@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="NPCServer">
+      <UniqueIdentifier>{5fcad29c-abb5-4440-b597-5f1f45e12cb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{d6d4de5e-074f-449a-90e6-d9c754603b39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LuaAPI">
+      <UniqueIdentifier>{94f97199-ba4a-42a3-85ee-234465886e72}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="NPCServer.cpp">
+      <Filter>NPCServer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NPCServer.h">
+      <Filter>NPCServer</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

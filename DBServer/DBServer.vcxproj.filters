@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="DBServer">
+      <UniqueIdentifier>{5fcad29c-abb5-4440-b597-5f1f45e12cb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DBManager">
+      <UniqueIdentifier>{54672d7b-3c47-40c2-91aa-66db68903f6c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="DBServer.cpp">
+      <Filter>DBServer</Filter>
+    </ClCompile>
+    <ClCompile Include="DBManager.cpp">
+      <Filter>DBManager</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DBServer.h">
+      <Filter>DBServer</Filter>
+    </ClInclude>
+    <ClInclude Include="DBManager.h">
+      <Filter>DBManager</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
