@@ -19,11 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NonPlayer.cpp" />
     <ClCompile Include="NPCServer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Object.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="NonPlayer.h" />
     <ClInclude Include="NPCServer.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjectState.h" />
+    <ClInclude Include="ObjectType.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8098845D-011E-4067-9D6E-8C39F39C0A38}</ProjectGuid>

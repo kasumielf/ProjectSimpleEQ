@@ -9,7 +9,8 @@ public:
 	AuthServer(const int capacity, const short port) : BaseServer(capacity, port) {}
 	~AuthServer() {}
 
-	virtual void ProcessPacket(const int id, char* packet);
+	virtual void ProcessPacket(const int id, unsigned char* packet);
 	virtual void Logging(const wchar_t* msg, ...);
+	virtual void OnCloseSocket(const int id) {}
 };
 

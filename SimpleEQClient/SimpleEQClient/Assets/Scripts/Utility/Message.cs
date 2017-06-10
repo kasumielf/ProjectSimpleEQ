@@ -3,7 +3,7 @@
 public class Message
 {
     private MessageType type;
-    private List<string> param;
+    private List<object> param;
     public MessageType Type
     {
         get
@@ -16,15 +16,15 @@ public class Message
     {
         type = _type;
 
-        param = new List<string>();
+        param = new List<object>();
     }
 
-    public void Push(string data)
+    public void Push(object data)
     {
         param.Add(data);
     }
 
-    public string GetParam(int idx)
+    public object GetParam(int idx)
     {
         return param[idx];
     }

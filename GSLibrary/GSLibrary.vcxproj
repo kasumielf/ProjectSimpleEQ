@@ -154,6 +154,7 @@
     <ClInclude Include="BaseServer.h" />
     <ClInclude Include="BaseSession.h" />
     <ClInclude Include="CommonDefines.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="IOCPOpType.h" />
     <ClInclude Include="OverlappedEx.h" />
     <ClInclude Include="TimerEventManager.h" />

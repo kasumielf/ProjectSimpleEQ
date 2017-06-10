@@ -7,7 +7,9 @@ const unsigned char ID_MOVE = 2;
 const unsigned char ID_ATTACK = 3;
 const unsigned char ID_CHAT = 4;
 const unsigned char ID_LOGOUT = 5;
+const unsigned char ID_Request_Enter_GameWorld = 6;
 
+#pragma pack(push, 1)
 struct LOGIN : BasePacket
 {
 	LOGIN()
@@ -57,4 +59,18 @@ struct LOGOUT : BasePacket
 		PACKET_ID = ID_LOGOUT;
 		SIZE = sizeof(LOGOUT);
 	}
+
+	unsigned int user_id;
 };
+
+struct Request_Enter_GameWorld : BasePacket
+{
+	Request_Enter_GameWorld()
+	{
+		PACKET_ID = ID_Request_Enter_GameWorld;
+		SIZE = sizeof(Request_Enter_GameWorld);
+	}
+
+	unsigned int user_uid;
+};
+#pragma pack(pop)

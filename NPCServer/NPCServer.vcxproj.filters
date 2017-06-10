@@ -10,16 +10,37 @@
     <Filter Include="LuaAPI">
       <UniqueIdentifier>{94f97199-ba4a-42a3-85ee-234465886e72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Objects">
+      <UniqueIdentifier>{8425557e-9dc6-4e89-8931-7c02c38e0ff5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NPCServer.cpp">
       <Filter>NPCServer</Filter>
     </ClCompile>
+    <ClCompile Include="NonPlayer.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NPCServer.h">
       <Filter>NPCServer</Filter>
+    </ClInclude>
+    <ClInclude Include="NonPlayer.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectState.h">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectType.h">
+      <Filter>Objects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

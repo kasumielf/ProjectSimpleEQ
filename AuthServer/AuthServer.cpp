@@ -6,9 +6,11 @@
 
 #include <iostream>
 
-void AuthServer::ProcessPacket(const int id, char * packet)
+void AuthServer::ProcessPacket(const int id, unsigned char * packet)
 {
 	unsigned char packet_id = packet[0];
+
+	Logging(L"Packet ID Is %d", packet_id);
 
 	if (packet_id > 0)
 	{
@@ -19,39 +21,41 @@ void AuthServer::ProcessPacket(const int id, char * packet)
 				LOGIN *recvPacket = reinterpret_cast<LOGIN*>(packet);
 				
 				Request_Auth_To_DB_IsUserExist req;
-
+				req.RESPONSE_ID = id;
 				wcscpy_s(req.username, recvPacket->ID_STR);
+				SendToInternal("DB", reinterpret_cast<unsigned char*>(&req));
 
-				SendToInternal("DB", reinterpret_cast<char*>(&req));
-
+				Logging(L"Login request by username %ws", recvPacket->ID_STR);
 				break;
 			}
 			case ID_LOGOUT:
 			{
 				LOGOUT *recvPacket = reinterpret_cast<LOGOUT*>(packet);
 
+				Logging(L"Logout request from %d", id);
+
 				CloseSocket(id);
 
 				break;
 			}
-			case ID_Response_User_Exist:
+			case ID_Response_DB_To_Auth_UserExist:
 			{
 				Response_DB_To_Auth_IsUserExist *recvPacket = reinterpret_cast<Response_DB_To_Auth_IsUserExist*>(packet);
 				unsigned int uuid = recvPacket->user_uid;
 
-				if (uuid >= 0)
+				if (uuid > 0)
 				{
 					Request_Auth_To_World_AllocateUser req;
 
-					req.RESPONSE_ID = id;
+					req.RESPONSE_ID = recvPacket->RESPONSE_ID;
 					req.user_uid = uuid;
-
-					SendToInternal("World", reinterpret_cast<char*>(&req));
+					
+					SendToInternal("World", reinterpret_cast<unsigned char*>(&req));
 				}
 				else
 				{
 					LOGIN_FAIL res;
-					Send(id, reinterpret_cast<char*>(&res));
+					Send(recvPacket->client_id, reinterpret_cast<unsigned char*>(&res));
 				}
 
 				break;
@@ -66,13 +70,17 @@ void AuthServer::ProcessPacket(const int id, char * packet)
 					// ToDo : 하드 코딩된거 수정할 것.
 					wcscpy_s(connPacket.ip, L"127.0.0.1");
 					connPacket.port = 4003;
+					connPacket.user_uid = res->user_uid;
 
-					Send(res->RESPONSE_ID, reinterpret_cast<char*>(&connPacket));
+					Logging(L"User is allocated to World. Send World Server Connect request");
+					Send(res->client_id, reinterpret_cast<unsigned char*>(&connPacket));
 				}
 				else
 				{
 					LOGIN_FAIL not;
-					Send(res->RESPONSE_ID, reinterpret_cast<char*>(&not));
+					Send(res->client_id, reinterpret_cast<unsigned char*>(&not));
+					Logging(L"Login is failed. User is not exist");
+
 				}
 			}
 		}

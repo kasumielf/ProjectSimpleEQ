@@ -31,6 +31,8 @@ public:
 	const unsigned int GetY() { return y; }
 	const wchar_t* const GetName() { return name; }
 
-	virtual void Update();
+	void MoveByDirection(const char direction);
+
+	virtual void Update() {}
 };
 

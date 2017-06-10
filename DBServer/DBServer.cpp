@@ -4,7 +4,7 @@
 #include "../Common/InnerRequestPacket.h"
 #include "../Common/InnerResponsePacket.h"
 
-void DBServer::ProcessPacket(const int id, char * packet)
+void DBServer::ProcessPacket(const int id, unsigned char * packet)
 {
 	unsigned char packet_id = packet[0];
 
@@ -22,11 +22,16 @@ void DBServer::ProcessPacket(const int id, char * packet)
 				ResultMapPtr result(m_db.Execute(query));
 
 				Response_DB_To_Auth_IsUserExist res;
-				
-				res.user_uid = std::stoi(result->at(L"uuid"));
-				res.RESPONSE_ID = req->RESPONSE_ID;
+				res.client_id = req->RESPONSE_ID;
+				res.user_uid = 0;
 
-				Send(id, reinterpret_cast<char*>(&res));
+				if (result->size() > 0)
+				{
+					res.user_uid = std::stoi(result->at(L"uuid"));
+					res.RESPONSE_ID = req->RESPONSE_ID;
+				}
+
+				Send(id, reinterpret_cast<unsigned char*>(&res));
 
 				break;
 			}
@@ -35,27 +40,35 @@ void DBServer::ProcessPacket(const int id, char * packet)
 				Request_World_To_DB_GetUserStatus *req = reinterpret_cast<Request_World_To_DB_GetUserStatus*>(packet);
 
 				wchar_t query[256];
-				swprintf(query, sizeof(query), L"EXEC GET_USER_INFO %d", req->user_uid);
+				swprintf(query, sizeof(query), L"EXEC USER_GET_USERINFO %d", req->user_uid);
 
 				ResultMapPtr result(m_db.Execute(query));
 				Response_DB_To_World_GetUserStatus res;
 				res.RESPONSE_ID = req->RESPONSE_ID;
 				res.user_uid = -1;
+				res.client_id = req->client_id;
 
 				if (result->size() > 0)
 				{
-					res.user_uid = std::stoi(result->at(L"uuid"));
+					res.user_uid = std::stoul(result->at(L"uuid"));
 					wcscpy_s(res.username, result->at(L"username").c_str());
 					res.level = std::stoi(result->at(L"level"));
 					res.exp = std::stol(result->at(L"exp"));
 					res.hp = std::stoi(result->at(L"hp"));
 					res.x = std::stoi(result->at(L"x"));
 					res.y = std::stoi(result->at(L"y"));
-
-					Send(id, reinterpret_cast<char*>(&res));
 				}
 
-				Send(id, reinterpret_cast<char*>(&res));
+				Send(id, reinterpret_cast<unsigned char*>(&res));
+
+				break;
+			}
+			case ID_Request_World_To_DB_UpdateUserPosition:
+			{
+				Request_World_To_DB_UpdateUserPotision *req = reinterpret_cast<Request_World_To_DB_UpdateUserPotision*>(packet);
+				wchar_t query[256];
+				swprintf(query, sizeof(query), L"EXEC USER_UPDATE_LOCATION %d, %d, %d", req->user_uid, req->x, req->y);
+				m_db.ExecuteDirect(query);
 
 				break;
 			}

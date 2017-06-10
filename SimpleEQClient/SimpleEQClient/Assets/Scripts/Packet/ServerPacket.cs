@@ -16,6 +16,8 @@ namespace ServerPacket
             ID_REMOVE_OBJECT = 15,
             ID_ADD_OBJECT = 16,
             ID_CONNECT_SERVER = 17,
+            ID_Notify_Player_Enter = 18,
+            ID_Notify_Player_Move = 19,
             ID_Notify_Player_Attack_NPC = 71,
             ID_Notify_NPC_Attack_Player = 72,
     }
@@ -164,4 +166,36 @@ namespace ServerPacket
         public ushort damage;
     };
 
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
+    class Notify_Player_Enter : BasePacket
+    {
+        Notify_Player_Enter()
+        {
+            PACKET_ID = PacketId.ID_Notify_Player_Enter;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Enter));
+        }
+
+        public uint user_uid;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
+        public string player_name;
+        public ushort x;
+        public ushort y;
+    }
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
+    class Notify_Player_Move_Position : BasePacket
+    {
+        Notify_Player_Move_Position()
+        {
+            PACKET_ID = PacketId.ID_Notify_Player_Move;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Move_Position));
+        }
+        public uint id;
+        public ushort x;
+        public ushort y;
+    };
+
 }
+

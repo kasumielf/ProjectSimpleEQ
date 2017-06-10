@@ -19,10 +19,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="NonPlayer.cpp" />
+    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Sector.cpp" />
+    <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldServer.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Faction.h" />
+    <ClInclude Include="NonPlayer.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjectState.h" />
+    <ClInclude Include="ObjectType.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="Quest.h" />
+    <ClInclude Include="Sector.h" />
+    <ClInclude Include="World.h" />
     <ClInclude Include="WorldServer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

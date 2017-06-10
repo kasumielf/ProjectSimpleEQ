@@ -12,6 +12,10 @@ const long HOSTILE_FATCION_VALUE = -10000;
 const long ENEMY_FACTION_VALUE = -30000;
 
 const short MAX_OBJECT_SIGHT = 5;
-const short MAX_SECTOR_HEIGHT = 10;
-const short MAX_SECTOR_WIDTH = 10;
 
+const unsigned int MAX_SESSION_ID_POOL = 100000;
+
+const unsigned short MAX_SECTOR_WIDTH = 15;
+const unsigned short MAX_SECTOR_HEIGHT = 15;
+
+const unsigned short MAX_SIGHT_RANGE = 10;

@@ -9,9 +9,6 @@ using System.Text;
 using Objects;
 
 public class WorldScene : MonoBehaviour {
-
-    GameObject BaseEnemyPrefab;
-
     public Text myX;
     public Text myY;
 
@@ -21,9 +18,10 @@ public class WorldScene : MonoBehaviour {
     public Text myMaxHp;
     public Text myExp;
     public Text myBaseDmg;
+    public BaseEnemy baseEnemyPrefab;
 
     private Player myPlayer;
-    private Dictionary<uint, GameObject> mobs;
+    private Dictionary<uint, BaseEnemy> mobs;
     private List<Objects.Object> mySightList;
     public GameObject myPlayerObject;
 
@@ -34,7 +32,8 @@ public class WorldScene : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-        BaseEnemyPrefab = Resources.Load("Prefabs/BaseEnemy") as GameObject;
+        baseEnemyPrefab = Resources.Load("Prefabs/BaseEnemy", typeof(BaseEnemy)) as BaseEnemy;
+        mobs = new Dictionary<uint, BaseEnemy>();
     }
 
     private void Awake()
@@ -49,9 +48,9 @@ public class WorldScene : MonoBehaviour {
         {
             case MessageType.CONNECT_TO_WORLD:
                 {
-                    string ip = msg.GetParam(0);
-                    short port = short.Parse(msg.GetParam(1));
-                    uint user_uid = uint.Parse(msg.GetParam(2));
+                    string ip = msg.GetParam(0).ToString();
+                    short port = Convert.ToInt16(msg.GetParam(1));
+                    uint user_uid = Convert.ToUInt32(msg.GetParam(2));
                     nm.Connect(ip, port);
 
                     while (nm.isConnected() != true) ;
@@ -71,8 +70,8 @@ public class WorldScene : MonoBehaviour {
                 }
             case MessageType.ATTACK_NPC:
                 {
-                    uint attacking_id = uint.Parse(msg.GetParam(0));
-                    uint attacking_damage = uint.Parse(msg.GetParam(1));
+                    uint attacking_id = (uint)msg.GetParam(0);
+                    uint attacking_damage = (ushort)msg.GetParam(1);
 
                     if (attacking_id == 0)
                         Debug.Log("No attack target in sight");
@@ -82,8 +81,14 @@ public class WorldScene : MonoBehaviour {
                 }
             case MessageType.CREATE_NPC:
                 {
-                    NonPlayer npc = new NonPlayer();
+                    NonPlayer npc = msg.GetParam(0) as NonPlayer;
 
+                    Debug.Log("NPC Created!  id : " + npc.id + "name : " + npc.name + "/ x : " + npc.x + "/" + npc.y);
+
+                    BaseEnemy bm = Instantiate(baseEnemyPrefab, new Vector3(-1, -1, -1), Quaternion.identity);
+                    bm.baseObject = npc;
+                    
+                    mobs.Add(npc.id, bm);
 
                     break;
                 }
@@ -118,22 +123,22 @@ public class WorldScene : MonoBehaviour {
             movePacket.DIR = 2;
             nm.Send(Utility.ToByteArray(movePacket));
         }
-        else if(Input.GetKeyDown(KeyCode.A))
+        else if (Input.GetKeyDown(KeyCode.D))
         {
-            myPlayerObject.transform.position += new Vector3(-4.0f, 0.0f, 0.0f);
-            movePacket.DIR = 8;
+            myPlayerObject.transform.position += new Vector3(4.0f, 0.0f, 0.0f);
+            movePacket.DIR = 4;
             nm.Send(Utility.ToByteArray(movePacket));
         }
-        else if(Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S))
         {
             myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -4.0f);
             movePacket.DIR = 6;
             nm.Send(Utility.ToByteArray(movePacket));
         }
-        else if(Input.GetKeyDown(KeyCode.D))
+        else if (Input.GetKeyDown(KeyCode.A))
         {
-            myPlayerObject.transform.position += new Vector3(4.0f, 0.0f, 0.0f);
-            movePacket.DIR = 4;
+            myPlayerObject.transform.position += new Vector3(-4.0f, 0.0f, 0.0f);
+            movePacket.DIR = 8;
             nm.Send(Utility.ToByteArray(movePacket));
         }
         else if(Input.GetKeyDown(KeyCode.Q))
@@ -216,8 +221,8 @@ public class WorldScene : MonoBehaviour {
                     ServerPacket.Notifty_Player_Attack_NPC res = (ServerPacket.Notifty_Player_Attack_NPC)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notifty_Player_Attack_NPC));
 
                     Message msg = new Message(MessageType.ATTACK_NPC);
-                    msg.Push(res.npc_id.ToString());
-                    msg.Push(res.damage.ToString());
+                    msg.Push(res.npc_id);
+                    msg.Push(res.damage);
 
                     MessageQueue.getInstance.Enqueue(msg);
                     break;

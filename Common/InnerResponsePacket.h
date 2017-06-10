@@ -3,29 +3,24 @@
 #include "InnerBasePacket.h"
 
 // for DB
-const unsigned char ID_Response_User_Exist = 150;
-const unsigned char ID_Response_DB_To_World_GetUserStatus = 151;
-const unsigned char ID_Response_DB_To_World_UpdateUserStatus = 151;
-
-// for NPC
-const unsigned char ID_Response_Attack_NPC = 152;
-const unsigned char ID_Notify_Add_NPC = 153;
-const unsigned char ID_Notify_Remove_NPC = 154;
-const unsigned char ID_Notify_NPC_Attack = 155;
+const unsigned char ID_Response_DB_To_Auth_UserExist = 50;
+const unsigned char ID_Response_DB_To_World_GetUserStatus = 51;
+const unsigned char ID_Response_DB_To_World_UpdateUserStatus = 52;
 
 // for world
-const unsigned char ID_Response_World_To_Auth_AllocateUser = 180;
+const unsigned char ID_Response_World_To_Auth_AllocateUser = 53;
 
-
+#pragma pack(push, 1)
 struct Response_DB_To_Auth_IsUserExist : InnerBasePacket
 {
 	Response_DB_To_Auth_IsUserExist()
 	{
-		PACKET_ID = ID_Response_User_Exist;
+		PACKET_ID = ID_Response_DB_To_Auth_UserExist;
 		SIZE = sizeof(Response_DB_To_Auth_IsUserExist);
 	}
 
 	unsigned int user_uid;
+	unsigned int client_id;
 };
 
 struct Response_DB_To_World_GetUserStatus : InnerBasePacket
@@ -35,8 +30,8 @@ struct Response_DB_To_World_GetUserStatus : InnerBasePacket
 		PACKET_ID = ID_Response_DB_To_World_GetUserStatus;
 		SIZE = sizeof(Response_DB_To_World_GetUserStatus);
 	}
-
-	unsigned short user_uid;
+	unsigned int client_id;
+	unsigned int user_uid;
 	wchar_t username[12];
 	unsigned short x;
 	unsigned short y;
@@ -56,55 +51,6 @@ struct Response_DB_To_World_UpdateUserStatus : InnerBasePacket
 	bool result;
 };
 
-struct Response_Attack_NPC : InnerBasePacket
-{
-	Response_Attack_NPC()
-	{
-		PACKET_ID = ID_Response_Attack_NPC;
-		SIZE = sizeof(Response_Attack_NPC);
-	}
-
-	unsigned short attacker_id;
-	unsigned short npc_id;
-	unsigned short damage;
-};
-
-struct Notify_NPC_To_World_AddNPC : InnerBasePacket
-{
-	Notify_NPC_To_World_AddNPC()
-	{
-		PACKET_ID = ID_Notify_Add_NPC;
-		SIZE = sizeof(Notify_NPC_To_World_AddNPC);
-	}
-
-	unsigned short npc_id;
-	unsigned char npc_type;
-};
-
-struct Notify_NPC_To_World_RemoveNPC : InnerBasePacket
-{
-	Notify_NPC_To_World_RemoveNPC()
-	{
-		PACKET_ID = ID_Notify_Remove_NPC;
-		SIZE = sizeof(Notify_NPC_To_World_RemoveNPC);
-	}
-
-	unsigned short npc_id;
-};
-
-struct Notify_NPC_To_World_NPCAttack : InnerBasePacket
-{
-	Notify_NPC_To_World_NPCAttack()
-	{
-		PACKET_ID = ID_Notify_NPC_Attack;
-		SIZE = sizeof(Notify_NPC_To_World_NPCAttack);
-	}
-
-	unsigned short npc_id;
-	unsigned short target_id;
-	unsigned short damage;
-};
-
 struct Response_World_To_Auth_AllocateUser : InnerBasePacket
 {
 	Response_World_To_Auth_AllocateUser()
@@ -114,4 +60,7 @@ struct Response_World_To_Auth_AllocateUser : InnerBasePacket
 	}
 
 	bool success;
+	unsigned int client_id;
+	unsigned int user_uid;
 };
+#pragma pack(pop)

@@ -37,6 +37,9 @@
     <ClInclude Include="TimerEventManager.h">
       <Filter>Timer</Filter>
     </ClInclude>
+    <ClInclude Include="Event.h">
+      <Filter>Timer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseServer.cpp" />

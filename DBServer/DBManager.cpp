@@ -109,7 +109,6 @@ ResultMap* DBManager::Execute(const wchar_t* query)
 void DBManager::ExecuteDirect(const wchar_t * query)
 {
 	SQLRETURN ret;
-	ResultMap* result = new ResultMap();
 	ret = SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
 	ret = SQLExecDirectW(hStmt, (SQLWCHAR *)query, SQL_NTS);
 

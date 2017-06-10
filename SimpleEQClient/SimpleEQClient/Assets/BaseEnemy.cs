@@ -6,7 +6,7 @@ using Objects;
 
 public class BaseEnemy : MonoBehaviour {
     public TextMesh name;
-    Objects.Object baseObject;
+    public Objects.Object baseObject = new Objects.Object();
 
 	// Use this for initialization
 	void Start () {

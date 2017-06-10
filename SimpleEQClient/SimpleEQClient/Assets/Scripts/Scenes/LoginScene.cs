@@ -86,8 +86,8 @@ public class LoginScene : MonoBehaviour {
                     Message msg = new Message(MessageType.SCENE_CHANGE_LOGIN_TO_WORLD);
 
                     msg.Push(res.ip);
-                    msg.Push(res.port.ToString());
-                    msg.Push(res.user_uid.ToString());
+                    msg.Push(res.port);
+                    msg.Push(res.user_uid);
 
                     MessageQueue.getInstance.Enqueue(msg);
                 }

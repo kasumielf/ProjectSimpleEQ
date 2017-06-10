@@ -3,18 +3,18 @@
 #include "InnerBasePacket.h"
 
 // for DB Server
-const unsigned char ID_Request_World_To_DB_UpdateUserPosition = 101;
-const unsigned char ID_Request_World_To_DB_UpdateUserStatus = 102;
-const unsigned char ID_Request_Auth_To_DB_IsUserExist = 100;
-const unsigned char ID_Request_World_To_DB_GetUserStatus = 104;
+const unsigned char ID_Request_World_To_DB_UpdateUserPosition = 21;
+const unsigned char ID_Request_World_To_DB_UpdateUserStatus = 22;
+const unsigned char ID_Request_Auth_To_DB_IsUserExist = 23;
+const unsigned char ID_Request_World_To_DB_GetUserStatus = 24;
 
 // for NPC Server
-const unsigned short ID_Request_World_To_NPC_AttackNPC = 103;
+const unsigned char ID_Request_NPC_To_World_NPCMove = 25;
 
 // etc
-const unsigned short ID_Request_Auth_To_World_AllocateUser = 200;
+const unsigned char ID_Request_Auth_To_World_AllocateUser = 26;
 
-
+#pragma pack(push, 1)
 struct Request_Auth_To_DB_IsUserExist : InnerBasePacket
 {
 	Request_Auth_To_DB_IsUserExist()
@@ -34,7 +34,7 @@ struct Request_World_To_DB_UpdateUserPotision : InnerBasePacket
 		SIZE = sizeof(Request_World_To_DB_UpdateUserPotision);
 	}
 
-	unsigned short user_uid;
+	unsigned int user_uid;
 	unsigned short x;
 	unsigned short y;
 };
@@ -47,7 +47,7 @@ struct Request_World_To_DB_UpdateUserStatus : InnerBasePacket
 		SIZE = sizeof(Request_World_To_DB_UpdateUserStatus);
 	}
 
-	unsigned short user_uid;
+	unsigned int user_uid;
 	unsigned short x;
 	unsigned short y;
 	unsigned short hp;
@@ -60,22 +60,11 @@ struct Request_World_To_DB_GetUserStatus : InnerBasePacket
 	Request_World_To_DB_GetUserStatus()
 	{
 		PACKET_ID = ID_Request_World_To_DB_GetUserStatus;
-		SIZE = sizeof(ID_Request_World_To_DB_GetUserStatus);
+		SIZE = sizeof(Request_World_To_DB_GetUserStatus);
 	}
-	
+
+	unsigned int client_id;
 	unsigned int user_uid;
-};
-
-struct Request_World_To_NPC_Attak : InnerBasePacket
-{
-	Request_World_To_NPC_Attak()
-	{
-		PACKET_ID = ID_Request_World_To_NPC_AttackNPC;
-		SIZE = sizeof(ID_Request_World_To_NPC_AttackNPC);
-	}
-
-	unsigned short npc_id;
-	unsigned short damage;
 };
 
 struct Request_Auth_To_World_AllocateUser : InnerBasePacket
@@ -87,4 +76,16 @@ struct Request_Auth_To_World_AllocateUser : InnerBasePacket
 	}
 
 	unsigned int user_uid;
+	unsigned int client_id;
 };
+
+struct Request_NPC_To_World_NPCMoveAdd_NPC : InnerBasePacket
+{
+	Request_NPC_To_World_NPCMoveAdd_NPC()
+	{
+		PACKET_ID = ID_Request_NPC_To_World_NPCMove;
+		SIZE = sizeof(Request_NPC_To_World_NPCMoveAdd_NPC);
+	}
+};
+
+#pragma pack(pop)

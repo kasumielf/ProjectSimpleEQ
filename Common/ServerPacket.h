@@ -1,15 +1,23 @@
 #include "Defines.h"
 #include "BasePacket.h"
 
-const short ID_LOGIN_OK = 1;
-const short ID_LOGIN_FAIL = 2;
-const short ID_POSITION_INFO = 3;
-const short ID_NOTIFY_CHAT = 4;
-const short ID_STAT_CHANGE = 5;
-const short ID_REMOVE_OBJECT = 6;
-const short ID_ADD_OBJECT = 7;
-const short ID_CONNECT_SERVER = 255;
+const unsigned char ID_LOGIN_OK = 10;
+const unsigned char ID_LOGIN_FAIL = 11;
+const unsigned char ID_POSITION_INFO = 12;
+const unsigned char ID_NOTIFY_CHAT = 13;
+const unsigned char ID_STAT_CHANGE = 14;
+const unsigned char ID_REMOVE_OBJECT = 15;
+const unsigned char ID_ADD_OBJECT = 16;
+const unsigned char ID_CONNECT_SERVER = 17;
+const unsigned char ID_Notify_Player_Enter = 18;
+const unsigned char ID_Notify_Player_Move = 19;
 
+const unsigned char ID_Notify_Player_Attack_NPC = 71;
+const unsigned char ID_Notify_NPC_Attack_Player = 72;
+
+
+
+#pragma pack(push, 1)
 struct LOGIN_OK : BasePacket
 {
 	LOGIN_OK()
@@ -19,12 +27,14 @@ struct LOGIN_OK : BasePacket
 	}
 
 	wchar_t username[12];
-	unsigned short ID;
+	unsigned int ID;
 	unsigned short X_POS;
 	unsigned short Y_POS;
 	unsigned short HP;
 	unsigned short LEVEL;
 	unsigned long EXP;
+	unsigned short max_hp;
+	unsigned short base_damage;
 };
 
 struct LOGIN_FAIL : BasePacket
@@ -98,6 +108,7 @@ struct ADD_OBJECT : BasePacket
 	char TYPE;
 	unsigned short x;
 	unsigned short y;
+	wchar_t name[12];
 };
 
 struct CONNECT_SERVER : BasePacket
@@ -110,5 +121,56 @@ struct CONNECT_SERVER : BasePacket
 
 	wchar_t ip[15];
 	unsigned short port;
+	unsigned int user_uid;
 };
 
+struct Notify_Player_Attack_NPC : BasePacket
+{
+	Notify_Player_Attack_NPC()
+	{
+		PACKET_ID = ID_Notify_Player_Attack_NPC;
+		SIZE = sizeof(Notify_Player_Attack_NPC);
+	}
+	unsigned int npc_id;
+	unsigned short damage;
+};
+
+struct Noify_NPC_Attack_Player : BasePacket
+{
+	Noify_NPC_Attack_Player()
+	{
+		PACKET_ID = ID_Notify_NPC_Attack_Player;
+		SIZE = sizeof(Noify_NPC_Attack_Player);
+	}
+
+	unsigned int npc_id;
+	unsigned short damage;
+};
+
+struct Notify_Player_Enter : BasePacket
+{
+	Notify_Player_Enter()
+	{
+		PACKET_ID = ID_Notify_Player_Enter;
+		SIZE = sizeof(Notify_Player_Enter);
+	}
+
+	unsigned int user_uid;
+	wchar_t player_name[12];
+	unsigned short x;
+	unsigned short y;
+};
+
+struct Notify_Player_Move_Position : BasePacket
+{
+	Notify_Player_Move_Position()
+	{
+		PACKET_ID = ID_Notify_Player_Move;
+		SIZE = sizeof(Notify_Player_Move_Position);
+	}
+	unsigned int id;
+	unsigned short x;
+	unsigned short y;
+};
+
+#pragma pack(pop)

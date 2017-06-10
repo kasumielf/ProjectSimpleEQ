@@ -9,7 +9,7 @@ public:
 	OverlappedEx overlapped;
 	short id;
 	bool use;
-	char packet_buffer[MAX_PACKET_BUFFER_SIZE];
+	unsigned char packet_buffer[MAX_PACKET_BUFFER_SIZE];
 	int recvBytes;
 	int received;
 	int sendBytes;

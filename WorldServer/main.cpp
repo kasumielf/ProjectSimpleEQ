@@ -11,6 +11,8 @@ int main(int argc, char** argv)
 
 	server.Init();
 	server.Connect("DB", "127.0.0.1", 4001);
+	server.Connect("NPC", "127.0.0.1", 4002);
+
 	server.Start();
 
 	while (true)

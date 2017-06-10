@@ -8,7 +8,7 @@ struct OverlappedEx
 {
 	WSAOVERLAPPED	wsaOverlapped;
 	WSABUF			wsaBuf;
-	char			iocp_buffer[MAX_PACKET_BUFFER_SIZE];
+	unsigned char	iocp_buffer[MAX_PACKET_BUFFER_SIZE];
 	IOCPOpType		optype;
 	int				caller_id;
 };

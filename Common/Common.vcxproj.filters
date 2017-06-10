@@ -21,26 +21,8 @@
     <ClInclude Include="InnerResponsePacket.h">
       <Filter>Packet</Filter>
     </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>Object</Filter>
-    </ClInclude>
-    <ClInclude Include="Faction.h">
-      <Filter>Object</Filter>
-    </ClInclude>
-    <ClInclude Include="Quest.h">
-      <Filter>Object</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Object</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectType.h">
-      <Filter>Object\Enums</Filter>
-    </ClInclude>
-    <ClInclude Include="World.h">
-      <Filter>Object\World</Filter>
-    </ClInclude>
-    <ClInclude Include="NonPlayer.h">
-      <Filter>Object</Filter>
+    <ClInclude Include="InnerNotifyPacket.h">
+      <Filter>Packet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -53,31 +35,5 @@
     <Filter Include="Datas">
       <UniqueIdentifier>{d8b6264a-d1eb-4adb-b62a-218f880cfb60}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Object">
-      <UniqueIdentifier>{428ad4a0-74e2-4a01-9f60-281ff8dd68c7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Object\Enums">
-      <UniqueIdentifier>{e9fc10c9-325d-45ff-9bd1-62b3b27ddd04}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Object\World">
-      <UniqueIdentifier>{ee744687-6fa0-4fa7-9a99-2c169db8baa9}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Object.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectState.h">
-      <Filter>Object\Enums</Filter>
-    </ClCompile>
-    <ClCompile Include="World.cpp">
-      <Filter>Object\World</Filter>
-    </ClCompile>
-    <ClCompile Include="NonPlayer.cpp">
-      <Filter>Object</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

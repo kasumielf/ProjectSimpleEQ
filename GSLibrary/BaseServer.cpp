@@ -4,8 +4,8 @@ BaseServer::~BaseServer()
 {
 	for (auto session : m_sessions)
 	{
-		session = nullptr;
-		delete session;
+		session.second = nullptr;
+		delete session.second;
 	}
 
 	m_sessions.clear();
@@ -30,18 +30,9 @@ void BaseServer::Init()
 		return;
 	}
 
-	for (int i = 0; i < m_capacity; ++i)
+	for (int j = 0; j < MAX_SESSION_ID_POOL; ++j)
 	{
-		BaseSession* session = new BaseSession();
-		
-		ZeroMemory(&session->overlapped.wsaOverlapped, sizeof(session->overlapped.wsaOverlapped));
-		session->recvBytes = 0;
-		session->sendBytes = 0;
-		session->overlapped.wsaBuf.buf = session->overlapped.iocp_buffer;
-		session->overlapped.wsaBuf.len = MAX_PACKET_BUFFER_SIZE;
-		session->use = false;
-
-		m_sessions.push_back(session);
+		m_id_lists.push_back(j);
 	}
 
 	m_listen_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -69,25 +60,26 @@ void BaseServer::Start()
 		m_worker_thread.push_back(wth);
 	}
 
-	m_accept_thread= std::thread{ AcceptThreadFunc, this };
+	m_accept_thread = std::thread{ AcceptThreadFunc, this };
+	m_timer_thread = std::thread{ TimerThreadFunc, this };
 
 	Logging(L"Server Start");
 
-	m_accept_thread.join();
-
-	for (auto th : m_worker_thread) {
-		th->join();
-		delete th;
-	}
+	//m_accept_thread.join();
+	
+//	for (auto th : m_worker_thread) {
+	//	th->join();
+		//delete th;
+	//}
 }
 
 void BaseServer::Stop()
 {
 	closesocket(m_listen_sock);
 
-	for (int i = 0; i<m_capacity; ++i)
+	for (auto session : m_sessions)
 	{
-		closesocket(m_sessions[i]->socket);
+		closesocket(session.second->socket);
 	}
 
 	WSACleanup();
@@ -131,7 +123,7 @@ void BaseServer::Listen()
 
 void BaseServer::Connect(const char * server_name, const char * ip, const short port)
 {
-	if (m_internals.count(server_name) > 0)
+	if (m_internals_id.count(server_name) > 0)
 	{
 		Logging(L"Already connected to %ws", server_name);
 	}
@@ -139,27 +131,55 @@ void BaseServer::Connect(const char * server_name, const char * ip, const short 
 	{
 		int retry = 0;
 
-		BaseSession *int_session = new BaseSession();
-
-		int_session->socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
-
 		SOCKADDR_IN addr;
 
 		ZeroMemory(&addr, sizeof(addr));
 		addr.sin_family = AF_INET;
 		addr.sin_addr.s_addr = inet_addr(ip);
 		addr.sin_port = htons(port);
-		Logging(L"Try connect to %S, %S, %d", server_name, ip, port);
+		Logging(L"Try connect to %S Server, %S, %d", server_name, ip, port);
+
+		unsigned newId = -1;
+
+		lock.lock();
+		newId = m_id_lists.front();
+		m_id_lists.pop_front();
+		lock.unlock();
+
+		InitSession(newId);
+		m_sessions[newId]->socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+		m_sessions[newId]->id = newId;
+		m_sessions[newId]->use = true;
+		m_sessions[newId]->received = 0;
+		m_sessions[newId]->recvBytes = 0;
+		ZeroMemory(&m_sessions[newId]->overlapped, sizeof(m_sessions[newId]->overlapped));
+		m_sessions[newId]->overlapped.optype = IOCPOpType::OpRecv;
+		m_sessions[newId]->overlapped.wsaBuf.buf = reinterpret_cast<CHAR *>(m_sessions[newId]->overlapped.iocp_buffer);
+		m_sessions[newId]->overlapped.wsaBuf.len = sizeof(m_sessions[newId]->overlapped.iocp_buffer);
+
+		CreateIoCompletionPort((HANDLE)m_sessions[newId]->socket, m_iocp_handle, newId, 0);
+
+		DWORD recvBytes, flag = 0;
 
 		while (true)
 		{
 			int retval;
 			int err = WSAGetLastError();
 
-			retval = WSAConnect(int_session->socket, (SOCKADDR*)&addr, sizeof(addr), NULL, NULL, NULL, NULL);
+			retval = WSAConnect(m_sessions[newId]->socket, (SOCKADDR*)&addr, sizeof(addr), NULL, NULL, NULL, NULL);
 
 			if (err == WSAEISCONN)
+			{
+				retval = WSARecv(m_sessions[newId]->socket, &m_sessions[newId]->overlapped.wsaBuf, 1, &recvBytes, &flag, &m_sessions[newId]->overlapped.wsaOverlapped, NULL);
+
+				if (retval != 0)
+				{
+					int err_no = WSAGetLastError();
+					ErrorDisplay("Error from SendToInternal ", err_no);
+				}
+
 				break;
+			}
 
 			Sleep(1000);
 			retry++;
@@ -171,8 +191,9 @@ void BaseServer::Connect(const char * server_name, const char * ip, const short 
 			}
 		}
 
-		Logging(L"%S Internal Connection is complete", server_name);
-		m_internals[server_name] = int_session;
+		m_internals_id[server_name] = newId;
+
+		Logging(L"%S Server Internal Connection is complete and allocated index is %d", server_name, newId);
 	}
 }
 
@@ -187,16 +208,80 @@ void BaseServer::CloseSocket(const int id)
 	}
 
 	closesocket(m_sessions[id]->socket);
+
+	m_sessions.erase(id);
 }
 
-void BaseServer::Send(const int id, char * packet)
+void BaseServer::Send(const int id, unsigned char * packet)
 {
-	int retval = send(m_sessions[id]->socket, packet, packet[1], 0);
+	unsigned short psize = (unsigned short)packet[1];
+
+	OverlappedEx *over = new OverlappedEx;
+
+	over->optype = IOCPOpType::OpSend;
+	memcpy(over->iocp_buffer, packet, psize);
+	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
+
+	over->wsaBuf.buf = reinterpret_cast<CHAR *>(over->iocp_buffer);
+	over->wsaBuf.len = psize;
+
+	int ret = WSASend(m_sessions[id]->socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
+
+	if (ret != 0)
+	{
+		int err_no = WSAGetLastError();
+		ErrorDisplay("Error from Send ", err_no);
+	}
+
 }
 
-void BaseServer::SendToInternal(std::string name, char * packet)
+void BaseServer::SendToInternal(std::string name, unsigned char * packet)
 {
-	int retval = send(m_internals[name]->socket, packet, packet[1], 0);
+	unsigned int internal_session_index = m_internals_id[name];
+	unsigned short psize = (unsigned short)packet[1];
+
+	OverlappedEx *over = new OverlappedEx;
+
+	over->optype = IOCPOpType::OpSend;
+	memcpy(over->iocp_buffer, packet, psize);
+	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
+
+	over->wsaBuf.buf = reinterpret_cast<CHAR *>(over->iocp_buffer);
+	over->wsaBuf.len = psize;
+
+	int ret = WSASend(m_sessions[internal_session_index]->socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
+
+	if (ret != 0)
+	{
+		int err_no = WSAGetLastError();
+		ErrorDisplay("Error from SendToInternal ", err_no);
+	}
+}
+
+void BaseServer::InitSession(const int id)
+{
+	BaseSession* session = new BaseSession();
+
+	ZeroMemory(&session->overlapped.wsaOverlapped, sizeof(session->overlapped.wsaOverlapped));
+	session->recvBytes = 0;
+	session->sendBytes = 0;
+	session->overlapped.wsaBuf.buf = reinterpret_cast<CHAR*>(session->overlapped.iocp_buffer);
+	session->overlapped.wsaBuf.len = MAX_PACKET_BUFFER_SIZE;
+	session->use = false;
+
+	m_sessions[id] = session;
+}
+
+void BaseServer::BroadCast(unsigned char * packet)
+{
+	auto iter_b = m_sessions.begin();
+	auto iter_e = m_sessions.end();
+
+	for (; iter_b!=iter_e; ++iter_b)
+	{
+		if(iter_b->second->use)
+			Send(iter_b->first, packet);
+	}
 }
 
 void BaseServer::AcceptThreadFunc(BaseServer* self)
@@ -225,23 +310,20 @@ void BaseServer::AcceptThreadFunc(BaseServer* self)
 
 		self->Logging(L"Client Accept from %S:%d", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
-		int newId = -1;
+		unsigned int newId = -1;
 
-		for (int i = 0; i <self->m_capacity; ++i)
-		{
-			if (self->m_sessions[i]->use == false)
-			{
-				newId = i;
-				break;
-			}
-		}
-
-		if (newId == -1) {
+		if (self->m_sessions.size() >= self->m_capacity) {
 			self->Logging(L"User capacity is full");
 			closesocket(clientSock);
 			continue;
 		}
 
+		self->lock.lock();
+		newId = self->m_id_lists.front();
+		self->m_id_lists.pop_front();
+		self->lock.unlock();
+
+		self->InitSession(newId);
 		self->m_sessions[newId]->socket = clientSock;
 		self->m_sessions[newId]->id = newId;
 		self->m_sessions[newId]->use = true;
@@ -277,10 +359,16 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 	{
 		DWORD io_size;
 		DWORD id;
-		//Client *cptr = new Client;
 		OverlappedEx *over;
 
 		int retval = GetQueuedCompletionStatus(self->m_iocp_handle, &io_size, (PULONG_PTR)&id, (LPOVERLAPPED*)&over, INFINITE);
+
+		if (io_size == 0)
+		{
+			self->CloseSocket(id);
+			self->OnCloseSocket(id);
+			continue;
+		}
 
 		switch (over->optype)
 		{
@@ -297,21 +385,20 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 			}
 			case IOCPOpType::OpRecv:
 			{
-				char* buf = self->m_sessions[id]->overlapped.iocp_buffer;
+				unsigned char* buf = self->m_sessions[id]->overlapped.iocp_buffer;
 				unsigned short curr_packet_size = self->m_sessions[id]->recvBytes;
 				unsigned short prev_packet_size = self->m_sessions[id]->received;
 
-				self->Logging(L"Recv from client : %d", id);
-				while (io_size)
+				while (io_size > 0)
 				{
 					if (curr_packet_size == 0)
-						curr_packet_size = (short)buf[0];
+						curr_packet_size = (unsigned short)buf[1];
 
 					//unsigned int required = cptr->overlapped.recvBytes - cptr->overlapped.received;
 
 					if (io_size + prev_packet_size >= curr_packet_size)
 					{
-						char packet[MAX_PACKET_BUFFER_SIZE];
+						unsigned char packet[MAX_PACKET_BUFFER_SIZE];
 
 						memcpy(packet, self->m_sessions[id]->packet_buffer, prev_packet_size);
 						memcpy(packet + prev_packet_size, buf, curr_packet_size - prev_packet_size);
@@ -337,15 +424,13 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 				DWORD flags = 0;
 				retval = WSARecv(self->m_sessions[id]->socket, &self->m_sessions[id]->overlapped.wsaBuf, 1, NULL, &flags, &self->m_sessions[id]->overlapped.wsaOverlapped, NULL);
 
-				delete over;
-
 				break;
 			}
 			default:
 			{
 				if (self->m_iocp_events.count(over->optype) != 0)
 				{
-					self->m_iocp_events[over->optype]();
+					self->m_iocp_events[over->optype](id, self);
 				}
 				else
 				{
@@ -357,17 +442,52 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 	}
 }
 
-void BaseServer::AttachIOCPEvent(IOCPOpType type, std::function<void()> func)
+void BaseServer::TimerThreadFunc(BaseServer * self)
+{
+	OverlappedEx overlapped;
+	TimeEvent *ev;
+
+	while (true)
+	{
+		if (self->m_timerEvents.isEmpty() == false)
+		{
+			ev = &(*self->m_timerEvents.GetQueueBegin());
+
+			bool done = false;
+
+			auto now = std::chrono::high_resolution_clock::now();
+
+			if (ev->time <= now)
+			{
+				overlapped.optype = ev->event.event_type;
+				PostQueuedCompletionStatus(self->m_iocp_handle, 1, ev->event.provider, reinterpret_cast<LPOVERLAPPED>(&overlapped));
+				self->m_timerEvents.Dequeue();
+				done = true;
+			}
+		}
+		Sleep(100);
+	}
+
+}
+
+void BaseServer::AttachIOCPEvent(IOCPOpType type, std::function<void(unsigned int, BaseServer*)> func)
 {
 	if (m_iocp_events.count(type) == 0)
 	{
 		m_iocp_events[type] = func;
 	}
-	else
-	{
-		Logging(L"Already attached Event! (type : %S", type);
-	}
-
 }
 
+void BaseServer::ErrorDisplay(char *msg, int err_no)
+{
+	WCHAR *lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, err_no,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	Logging(L"%s\t%ws", msg, lpMsgBuf);
+	LocalFree(lpMsgBuf);
+}
 

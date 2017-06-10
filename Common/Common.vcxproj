@@ -146,24 +146,11 @@
     <ClInclude Include="ClientPacket.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Enums.h" />
-    <ClInclude Include="Faction.h" />
     <ClInclude Include="InnerBasePacket.h" />
     <ClInclude Include="InnerRequestPacket.h" />
     <ClInclude Include="InnerResponsePacket.h" />
-    <ClInclude Include="NonPlayer.h" />
-    <ClInclude Include="Object.h" />
-    <ClInclude Include="ObjectType.h" />
-    <ClInclude Include="Player.h" />
-    <ClInclude Include="Quest.h" />
+    <ClInclude Include="InnerNotifyPacket.h" />
     <ClInclude Include="ServerPacket.h" />
-    <ClInclude Include="World.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="NonPlayer.cpp" />
-    <ClCompile Include="Object.cpp" />
-    <ClCompile Include="ObjectState.h" />
-    <ClCompile Include="Player.cpp" />
-    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

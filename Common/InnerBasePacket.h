@@ -2,7 +2,9 @@
 
 #include "BasePacket.h"
 
+#pragma pack(push, 1)
 struct InnerBasePacket : BasePacket
 {
-	unsigned short RESPONSE_ID;
+	unsigned int RESPONSE_ID;
 };
+#pragma pack(pop)
