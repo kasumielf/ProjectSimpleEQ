@@ -20,13 +20,17 @@ public class MessageQueue
     {
         messages = new Queue<Message>();
     }
+    public bool IsEmpty()
+    {
+        return messages.Count > 0 ? false : true;
+    }
 
-    public void Push(Message data)
+    public void Enqueue(Message data)
     { 
         messages.Enqueue(data);
     }
 
-    public Message getData()
+    public Message Dequeue()
     {
         if (messages.Count > 0)
             return messages.Dequeue();

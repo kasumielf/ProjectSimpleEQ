@@ -87,7 +87,7 @@ namespace Assets.Scripts.Network
             while (io_size != 0)
             {
                 if (requiredPacketSize == 0)
-                    requiredPacketSize = recvBuffer[2];
+                    requiredPacketSize = BitConverter.ToUInt16(new byte[2] { recvBuffer[1], recvBuffer[2] }, 0); ;
 
                 if (io_size + recvPacketSize >= prevRecvPacketSize)
                 {

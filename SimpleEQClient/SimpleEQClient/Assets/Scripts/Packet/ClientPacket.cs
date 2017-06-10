@@ -13,6 +13,7 @@ namespace ClientPacket
         ID_ATTACK = 3,
         ID_CHAT = 4,
         ID_LOGOUT = 5,
+        ID_Request_Enter_GameWorld = 6,
     }
 
     [Serializable]
@@ -20,21 +21,21 @@ namespace ClientPacket
     class BasePacket
     {
         public PacketId PACKET_ID;
-        public short SIZE; 
+        public ushort SIZE; 
     }
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class LOGIN : BasePacket
     {
         public LOGIN()
         {
             PACKET_ID = PacketId.ID_LOGIN;
-            SIZE = (byte)Marshal.SizeOf(typeof(LOGIN));
+            SIZE = (ushort)Marshal.SizeOf(typeof(LOGIN));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
-        public string id_srt;
+        public string ID_STR;
     };
 
     [Serializable]
@@ -44,10 +45,10 @@ namespace ClientPacket
         public MOVE()
         {
             PACKET_ID = PacketId.ID_MOVE;
-            SIZE = (byte)Marshal.SizeOf(typeof(MOVE));
+            SIZE = (ushort)Marshal.SizeOf(typeof(MOVE));
         }
 
-        public byte direction;
+        public byte DIR;
     };
 
     [Serializable]
@@ -57,18 +58,18 @@ namespace ClientPacket
         public ATTACK()
         {
             PACKET_ID = PacketId.ID_ATTACK;
-            SIZE = (byte)Marshal.SizeOf(typeof(ATTACK));
+            SIZE = (ushort)Marshal.SizeOf(typeof(ATTACK));
         }
     };
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class CHAT : BasePacket
     {
         public CHAT()
         {
             PACKET_ID = PacketId.ID_CHAT;
-            SIZE = (byte)Marshal.SizeOf(typeof(CHAT));
+            SIZE = (ushort)Marshal.SizeOf(typeof(CHAT));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
@@ -82,7 +83,23 @@ namespace ClientPacket
         public LOGOUT()
         {
             PACKET_ID = PacketId.ID_LOGOUT;
-            SIZE = (byte)Marshal.SizeOf(typeof(LOGOUT));
+            SIZE = (ushort)Marshal.SizeOf(typeof(LOGOUT));
         }
+
+        public uint user_id;
     };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    class Request_Enter_GameWorld : BasePacket
+    {
+        public Request_Enter_GameWorld()
+        {
+            PACKET_ID = PacketId.ID_Request_Enter_GameWorld;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Request_Enter_GameWorld));
+        }
+
+        public uint user_uid;
+    };
+
 }

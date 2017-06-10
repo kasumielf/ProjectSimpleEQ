@@ -5,6 +5,7 @@ using Assets.Scripts.Network;
 using Scripts.Utility;
 using ClientPacket;
 using ServerPacket;
+using System.Globalization;
 
 public class NetworkManager : MonoBehaviour
 {

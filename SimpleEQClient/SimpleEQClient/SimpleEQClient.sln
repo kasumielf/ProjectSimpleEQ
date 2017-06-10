@@ -1,7 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleEQClient.Plugins", "SimpleEQClient.Plugins.csproj", "{88135BEF-9A88-8BE9-1FFE-3A6FFF8D09F3}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleEQClient", "SimpleEQClient.csproj", "{1104E5F1-F5C5-EA9B-E0D8-E94873D02A75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleEQClient.Editor.Plugins", "SimpleEQClient.Editor.Plugins.csproj", "{6888D8E3-FE69-1490-5440-76CDFDA81089}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,10 +13,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{88135BEF-9A88-8BE9-1FFE-3A6FFF8D09F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88135BEF-9A88-8BE9-1FFE-3A6FFF8D09F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88135BEF-9A88-8BE9-1FFE-3A6FFF8D09F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88135BEF-9A88-8BE9-1FFE-3A6FFF8D09F3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1104E5F1-F5C5-EA9B-E0D8-E94873D02A75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1104E5F1-F5C5-EA9B-E0D8-E94873D02A75}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1104E5F1-F5C5-EA9B-E0D8-E94873D02A75}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1104E5F1-F5C5-EA9B-E0D8-E94873D02A75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6888D8E3-FE69-1490-5440-76CDFDA81089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6888D8E3-FE69-1490-5440-76CDFDA81089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6888D8E3-FE69-1490-5440-76CDFDA81089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6888D8E3-FE69-1490-5440-76CDFDA81089}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

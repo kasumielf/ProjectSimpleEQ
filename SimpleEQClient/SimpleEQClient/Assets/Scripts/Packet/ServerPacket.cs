@@ -6,16 +6,18 @@ using System.Runtime.InteropServices;
 
 namespace ServerPacket
 {
-    enum PacketId : byte
+    public enum PacketId : byte
     {
-            ID_LOGIN_OK = 1,
-            ID_LOGIN_FAIL = 2,
-            ID_POSITION_INFO = 3,
-            ID_NOTIFY_CHAT = 4,
-            ID_STAT_CHANGE = 5,
-            ID_REMOVE_OBJECT = 6,
-            ID_ADD_OBJECT = 7,
-            ID_CONNECT_SERVER = 255,
+            ID_LOGIN_OK = 10,
+            ID_LOGIN_FAIL = 11,
+            ID_POSITION_INFO = 12,
+            ID_NOTIFY_CHAT = 13,
+            ID_STAT_CHANGE = 14,
+            ID_REMOVE_OBJECT = 15,
+            ID_ADD_OBJECT = 16,
+            ID_CONNECT_SERVER = 17,
+            ID_Notify_Player_Attack_NPC = 71,
+            ID_Notify_NPC_Attack_Player = 72,
     }
 
     [Serializable]
@@ -27,23 +29,25 @@ namespace ServerPacket
     }
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class LOGIN_OK : BasePacket
     {
         public LOGIN_OK()
         {
             PACKET_ID = PacketId.ID_LOGIN_OK;
-            SIZE = (byte)Marshal.SizeOf(typeof(LOGIN_OK));
+            SIZE = (ushort)Marshal.SizeOf(typeof(LOGIN_OK));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
         public string username;
-        public ushort id;
+        public uint id;
         public ushort x_pos;
         public ushort y_pos;
         public ushort hp;
         public ushort level;
-        public ulong exp; 
+        public uint exp;
+        public ushort max_hp;
+        public ushort base_damage;
     };
 
     [Serializable]
@@ -53,7 +57,7 @@ namespace ServerPacket
         public LOGIN_FAIL()
         {
             PACKET_ID = PacketId.ID_LOGIN_FAIL;
-            SIZE = (byte)Marshal.SizeOf(typeof(LOGIN_FAIL));
+            SIZE = (ushort)Marshal.SizeOf(typeof(LOGIN_FAIL));
         }
     };
 
@@ -64,7 +68,7 @@ namespace ServerPacket
         public POSITION_INFO()
         {
             PACKET_ID = PacketId.ID_POSITION_INFO;
-            SIZE = (byte)Marshal.SizeOf(typeof(POSITION_INFO));
+            SIZE = (ushort)Marshal.SizeOf(typeof(POSITION_INFO));
         }
     };
 
@@ -75,7 +79,7 @@ namespace ServerPacket
         public Notify_Chat()
         {
             PACKET_ID = PacketId.ID_NOTIFY_CHAT;
-            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Chat));
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Chat));
         }
 
         public ushort speaker_id;
@@ -90,7 +94,7 @@ namespace ServerPacket
         public STAT_CHANGE()
         {
             PACKET_ID = PacketId.ID_STAT_CHANGE;
-            SIZE = (byte)Marshal.SizeOf(typeof(STAT_CHANGE));
+            SIZE = (ushort)Marshal.SizeOf(typeof(STAT_CHANGE));
         }
 
         public ushort HP;
@@ -105,7 +109,7 @@ namespace ServerPacket
         public REMOVE_OBJECT()
         {
             PACKET_ID = PacketId.ID_REMOVE_OBJECT;
-            SIZE = (byte)Marshal.SizeOf(typeof(REMOVE_OBJECT));
+            SIZE = (ushort)Marshal.SizeOf(typeof(REMOVE_OBJECT));
         }
        
         public ushort ID;
@@ -113,33 +117,51 @@ namespace ServerPacket
     };
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class ADD_OBJECT : BasePacket
     {
         public ADD_OBJECT()
         {
             PACKET_ID = PacketId.ID_REMOVE_OBJECT;
-            SIZE = (byte)Marshal.SizeOf(typeof(ADD_OBJECT));
+            SIZE = (ushort)Marshal.SizeOf(typeof(ADD_OBJECT));
         }
 
         public ushort ID;
         public byte TYPE;
         public ushort x;
         public ushort y;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
+        public string name;
     };
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class CONNECT_SERVER : BasePacket
     {
         public CONNECT_SERVER()
         {
             PACKET_ID = PacketId.ID_CONNECT_SERVER;
-            SIZE = (byte)Marshal.SizeOf(typeof(CONNECT_SERVER));
+            SIZE = (ushort)Marshal.SizeOf(typeof(CONNECT_SERVER));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 15)]
         public string ip;
         public ushort port;
+        public uint user_uid;
     };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
+    class Notifty_Player_Attack_NPC : BasePacket
+    {
+        public Notifty_Player_Attack_NPC()
+        {
+            PACKET_ID = PacketId.ID_Notify_Player_Attack_NPC;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notifty_Player_Attack_NPC));
+        }
+
+        public uint npc_id;
+        public ushort damage;
+    };
+
 }
