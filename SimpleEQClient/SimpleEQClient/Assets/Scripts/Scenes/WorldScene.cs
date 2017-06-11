@@ -18,7 +18,10 @@ public class WorldScene : MonoBehaviour {
     public Text myMaxHp;
     public Text myExp;
     public Text myBaseDmg;
+
     public BaseEnemy baseEnemyPrefab;
+
+    public Text damageLog;
 
     private Player myPlayer;
     private Dictionary<uint, BaseEnemy> mobs;
@@ -64,7 +67,7 @@ public class WorldScene : MonoBehaviour {
                 }
             case MessageType.UPDATE_USER_POSITION:
                 {
-                    myPlayerObject.transform.position = new Vector3(myPlayer.x * 4, 0.1f, myPlayer.y * 4);
+                    myPlayerObject.transform.position = new Vector3(myPlayer.x, 0.1f, myPlayer.y);
 
                     break;
                 }
@@ -74,24 +77,48 @@ public class WorldScene : MonoBehaviour {
                     uint attacking_damage = (ushort)msg.GetParam(1);
 
                     if (attacking_id == 0)
-                        Debug.Log("No attack target in sight");
-                    else
-                        Debug.Log("Attack to " + msg.GetParam(0) + "/" + msg.GetParam(1));
+                        damageLog.text += "공격 가능 범위에 아무도 없습니다!\n";
                     break;
                 }
             case MessageType.CREATE_NPC:
                 {
                     NonPlayer npc = msg.GetParam(0) as NonPlayer;
 
-                    Debug.Log("NPC Created!  id : " + npc.id + "name : " + npc.name + "/ x : " + npc.x + "/" + npc.y);
+                    Debug.Log(npc.name);
+                    if(mobs.ContainsKey(npc.id) == false)
+                    {
+                        BaseEnemy bm = Instantiate(baseEnemyPrefab, new Vector3(-1, -1, -1), Quaternion.identity);
+                        bm.baseObject = npc;
 
-                    BaseEnemy bm = Instantiate(baseEnemyPrefab, new Vector3(-1, -1, -1), Quaternion.identity);
-                    bm.baseObject = npc;
-                    
-                    mobs.Add(npc.id, bm);
+                        mobs.Add(npc.id, bm);
+                    }
 
                     break;
                 }
+
+            case MessageType.REMOVE_NPC:
+                {
+                    uint id = Convert.ToUInt32(msg.GetParam(0));
+
+                    if (mobs.ContainsKey(id) == true)
+                    {
+                        Destroy(mobs[id].gameObject);
+                        mobs.Remove(id);
+                    }
+                    break;
+                }
+
+            case MessageType.DAMAGED_NPC:
+                {
+                    uint id = Convert.ToUInt32(msg.GetParam(0));
+                    ushort hp = Convert.ToUInt16(msg.GetParam(1));
+                    ushort dmg = Convert.ToUInt16(msg.GetParam(2));
+
+                    damageLog.text += String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}\n", mobs[id].baseObject.name, dmg, hp);
+
+                    break;
+                }
+
         }
     }
 
@@ -107,7 +134,7 @@ public class WorldScene : MonoBehaviour {
                     ProcessMessage(msg);
             }
 
-            yield return new WaitForSeconds(1);
+            yield return new WaitForEndOfFrame();
         }
 
         yield return 0;
@@ -119,25 +146,25 @@ public class WorldScene : MonoBehaviour {
 
         if(Input.GetKeyDown(KeyCode.W))
         {
-            myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, 4.0f);
+            myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, 1.0f);
             movePacket.DIR = 2;
             nm.Send(Utility.ToByteArray(movePacket));
         }
         else if (Input.GetKeyDown(KeyCode.D))
         {
-            myPlayerObject.transform.position += new Vector3(4.0f, 0.0f, 0.0f);
+            myPlayerObject.transform.position += new Vector3(1.0f, 0.0f, 0.0f);
             movePacket.DIR = 4;
             nm.Send(Utility.ToByteArray(movePacket));
         }
         else if (Input.GetKeyDown(KeyCode.S))
         {
-            myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -4.0f);
+            myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -1.0f);
             movePacket.DIR = 6;
             nm.Send(Utility.ToByteArray(movePacket));
         }
         else if (Input.GetKeyDown(KeyCode.A))
         {
-            myPlayerObject.transform.position += new Vector3(-4.0f, 0.0f, 0.0f);
+            myPlayerObject.transform.position += new Vector3(-1.0f, 0.0f, 0.0f);
             movePacket.DIR = 8;
             nm.Send(Utility.ToByteArray(movePacket));
         }
@@ -241,6 +268,27 @@ public class WorldScene : MonoBehaviour {
 
                     Message msg = new Message(MessageType.CREATE_NPC);
                     msg.Push(npc);
+                    MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+
+            case ServerPacket.PacketId.ID_REMOVE_OBJECT:
+                {
+                    ServerPacket.REMOVE_OBJECT res = (ServerPacket.REMOVE_OBJECT)Utility.ByteArrayToObject(data, typeof(ServerPacket.REMOVE_OBJECT));
+
+                    Message msg = new Message(MessageType.REMOVE_NPC);
+                    msg.Push(res.ID);
+                    MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+            case ServerPacket.PacketId.ID_Notify_NPC_Damaged:
+                {
+                    ServerPacket.Notify_NPC_Damaged res = (ServerPacket.Notify_NPC_Damaged)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_NPC_Damaged));
+
+                    Message msg = new Message(MessageType.DAMAGED_NPC);
+                    msg.Push(res.npc_id);
+                    msg.Push(res.npc_hp);
+                    msg.Push(res.gained_damage);
                     MessageQueue.getInstance.Enqueue(msg);
                     break;
                 }

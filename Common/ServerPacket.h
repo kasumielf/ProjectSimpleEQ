@@ -14,6 +14,7 @@ const unsigned char ID_Notify_Player_Move = 19;
 
 const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
+const unsigned char ID_Notify_NPC_Damaged = 73;
 
 
 
@@ -93,7 +94,7 @@ struct REMOVE_OBJECT : BasePacket
 		SIZE = sizeof(REMOVE_OBJECT);
 	}
 
-	unsigned short ID;
+	unsigned int ID;
 };
 
 struct ADD_OBJECT : BasePacket
@@ -104,7 +105,7 @@ struct ADD_OBJECT : BasePacket
 		SIZE = sizeof(ADD_OBJECT);
 	}
 
-	unsigned short ID;
+	unsigned int ID;
 	char TYPE;
 	unsigned short x;
 	unsigned short y;
@@ -171,6 +172,19 @@ struct Notify_Player_Move_Position : BasePacket
 	unsigned int id;
 	unsigned short x;
 	unsigned short y;
+};
+
+struct Notify_NPC_Damaged : BasePacket
+{
+	Notify_NPC_Damaged()
+	{
+		PACKET_ID = ID_Notify_NPC_Damaged;
+		SIZE = sizeof(Notify_NPC_Damaged);
+	}
+	
+	unsigned int npc_id;
+	unsigned short npc_hp;
+	unsigned short gained_damage;
 };
 
 #pragma pack(pop)

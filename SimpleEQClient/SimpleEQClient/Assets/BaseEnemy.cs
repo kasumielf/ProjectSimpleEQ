@@ -10,11 +10,11 @@ public class BaseEnemy : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        name.text = baseObject.name;
+        name.text = baseObject.name + "(" + baseObject.id + ")";
 	}
 	
 	// Update is called once per frame
 	void Update () {
-        transform.position = new Vector3(this.baseObject.x * 4, 0.0f, this.baseObject.y * 4);
+        transform.position = new Vector3(this.baseObject.x, 0.0f, this.baseObject.y);
 	}
 }

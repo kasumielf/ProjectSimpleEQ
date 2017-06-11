@@ -39,7 +39,7 @@ void NPCServer::InitTemporaryNPCs()
 {
 	// 임시 테스트용 NPC를 생성하는 코드
 
-	const int temporary_npc_count = 100;
+	const int temporary_npc_count = 1000;
 
 	for(int i=0;i<temporary_npc_count;++i)
 	{
@@ -48,9 +48,9 @@ void NPCServer::InitTemporaryNPCs()
 
 		np->SetCurrentState(ObjectState::Idle);
 		np->SetName(L"테스트 NPC");
-		np->SetLevel(rand() % 10);
+		np->SetLevel(rand() % 5);
 		np->SetBaseDamage(100);
-		np->SetMaxHp(np->GetLevel() * 300);
+		np->SetMaxHp(np->GetLevel() * 200);
 		np->SetHP(np->GetMaxHp());
 		np->SetFactionGroup(100);
 		np->SetX(rand() % MAX_WORLD_WIDTH);
@@ -130,8 +130,8 @@ void NPCServer::ProcessPacket(const int id, unsigned char * packet)
 						die_notify.gained_exp = npc->GetExp();
 						die_notify.remover_id = not->attacker_id;
 
-						npcs.erase(npc->GetId());
-						regenQueue.push_back(npc);
+						delete npcs.at(not->npc_id);
+						npcs.erase(not->npc_id);
 
 						Send(id, reinterpret_cast<unsigned char*>(&die_notify));
 					}

@@ -20,6 +20,7 @@ namespace ServerPacket
             ID_Notify_Player_Move = 19,
             ID_Notify_Player_Attack_NPC = 71,
             ID_Notify_NPC_Attack_Player = 72,
+            ID_Notify_NPC_Damaged = 73,
     }
 
     [Serializable]
@@ -114,7 +115,7 @@ namespace ServerPacket
             SIZE = (ushort)Marshal.SizeOf(typeof(REMOVE_OBJECT));
         }
        
-        public ushort ID;
+        public uint ID;
         public byte TYPE;
     };
 
@@ -124,11 +125,11 @@ namespace ServerPacket
     {
         public ADD_OBJECT()
         {
-            PACKET_ID = PacketId.ID_REMOVE_OBJECT;
+            PACKET_ID = PacketId.ID_ADD_OBJECT;
             SIZE = (ushort)Marshal.SizeOf(typeof(ADD_OBJECT));
         }
 
-        public ushort ID;
+        public uint ID;
         public byte TYPE;
         public ushort x;
         public ushort y;
@@ -197,5 +198,19 @@ namespace ServerPacket
         public ushort y;
     };
 
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
+    class Notify_NPC_Damaged : BasePacket
+    {
+        Notify_NPC_Damaged()
+        {
+            PACKET_ID = PacketId.ID_Notify_NPC_Damaged;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_NPC_Damaged));
+        }
+
+        public uint npc_id;
+        public ushort npc_hp;
+        public ushort gained_damage;
+    };
 }
 

@@ -41,25 +41,17 @@ void World::DeleteObject(unsigned int id)
 {
 	if (objects[id] != nullptr)
 	{
-		RemoveObject(objects[id]->GetX(), objects[id]->GetY());
-		delete objects[id];
-		objects[id] = nullptr;
+		DeleteObject(objects[id]);
 	}
 }
 
 void World::DeleteObject(Object * obj)
 {
-	if (obj != nullptr)
-	{
-		unsigned int id = obj->GetId();
-
-		if (objects[id] != nullptr)
-		{
-			RemoveObject(objects[id]->GetX(), objects[id]->GetY());
-			delete objects[id];
-			objects[id] = nullptr;
-		}
-	}
+	sector[obj->getCurrSectorY()][obj->getCurrSectorX()].RemovePlayer(obj->GetId());
+	objects.erase(obj->GetId());
+	RemoveObject(obj->GetX(), obj->GetY());
+	delete obj;
+	obj = nullptr;
 }
 
 void World::RemoveObject(unsigned short x, unsigned short y)

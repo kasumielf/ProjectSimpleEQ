@@ -55,6 +55,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 					res.client_id = req->RESPONSE_ID;
 					res.success = false;
 
+
 					Logging(L"User(uid %d) is failed allocated in Game World", req->user_uid);
 					Send(id, reinterpret_cast<unsigned char*>(&res));
 				}
@@ -166,14 +167,14 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 								short target_id = (*iter_b).second->GetId();
 								ObjectType target_type = (*iter_b).second->GetType();
 
-								if (target_id != id)
+								if (target_id != p->GetId())
 								{
 									short x = (*iter_b).second->GetX();
 									short y = (*iter_b).second->GetY();
 
 									if (IsClosed(my_x, my_y, x, y))
 									{
-										if (target_type != ObjectType::NonPlayer)
+										if (target_type != ObjectType::NonPlayer && target_id != p->GetId())
 											Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&notify));
 
 										p->AddViewList(target_id, target_type);
@@ -280,7 +281,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 									else
 									{
 										overlapped.caller_id = id;
-										PostQueuedCompletionStatus(m_iocp_handle, 0, (*iter_b).second->GetId(), reinterpret_cast<LPOVERLAPPED>(&overlapped));
+										//PostQueuedCompletionStatus(m_iocp_handle, 1, socketIds[(*iter_b).second->GetId()], reinterpret_cast<LPOVERLAPPED>(&overlapped));
 									}
 								}
 								else
@@ -294,28 +295,25 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 
 				for (auto target : new_view_list)
 				{
-					if (myPlayer->isExistViewList(target.first) == false)
+					if (myPlayer->isExistViewList(target.first) == false && target.first != myPlayer->GetId())
 					{
 						int target_id = target.first;
 						ObjectType target_type = target.second;
 
 						ADD_OBJECT addNotify;
+						addNotify.x = myPlayer->GetX();
+						addNotify.y = myPlayer->GetY();
+						wcscpy_s(addNotify.name, myPlayer->GetName());
 
 						if (target_type == ObjectType::Player)
 						{
 							addNotify.ID = target_id;
-							addNotify.x = myPlayer->GetX();
-							addNotify.y = myPlayer->GetY();
-
 							myPlayer->AddViewList(target_id, target_type);
-
 							myPlayer->AddViewList(id, ObjectType::Player);
 							Send(id, reinterpret_cast<unsigned char*>(&addNotify));
 
 							addNotify.ID = id;
-							addNotify.x = myPlayer->GetX();
-							addNotify.y = myPlayer->GetY();
-
+							wcscpy_s(addNotify.name, myPlayer->GetName());
 							Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&addNotify));
 						}
 						else
@@ -323,6 +321,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 							addNotify.ID = target_id;
 							addNotify.x = world->GetObjectById(target_id)->GetX();
 							addNotify.y = world->GetObjectById(target_id)->GetY();
+							wcscpy_s(addNotify.name, world->GetObjectById(target_id)->GetName());
 
 							myPlayer->AddViewList(target_id, target_type);
 							Send(id, reinterpret_cast<unsigned char*>(&addNotify));
@@ -388,8 +387,10 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 
 				if (o != nullptr)
 				{
+					Logging(L"Player %d is closed", id);
 					Lock();
-					world->DeleteObject(o->GetId());
+					world->DeleteObject(objects[id]);
+					objects[id] = nullptr;
 					Unlock();
 				}
 				else
@@ -427,10 +428,53 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 			}
 			case ID_Notify_NPC_To_World_NPCDieFromPlayer:
 			{
+				Notify_NPC_To_World_NPCDieFromPlayer * not = reinterpret_cast<Notify_NPC_To_World_NPCDieFromPlayer*>(packet);
+
+				REMOVE_OBJECT removePacket;
+				removePacket.ID = not->npc_id;
+
+				Object *o = world->GetObjectById(not->npc_id);
+
+				auto iter_b = world->GetPlayerBegin(o->getCurrSectorX(), o->getCurrSectorY());
+				auto iter_e = world->GetPlayerEnd(o->getCurrSectorX(), o->getCurrSectorY());
+
+				unsigned char* pk = reinterpret_cast<unsigned char*>(&packet);
+
+				Lock();
+				for (; iter_b != iter_e; ++iter_b)
+				{
+					if ((*iter_b).second->GetType() == ObjectType::Player)
+						Send(socketIds[(*iter_b).second->GetId()], pk);
+				}
+				Unlock();
+
+				world->RemoveObject(o->GetX(), o->GetY());
+				world->DeleteObject(o);
+				
 				break;
 			}
 			case ID_Notify_NPC_To_World_NPCDamaged:
 			{
+				Notify_NPC_To_World_NPCDamaged * not = reinterpret_cast<Notify_NPC_To_World_NPCDamaged*>(packet);
+
+				Notify_NPC_Damaged damagedPacket;
+				damagedPacket.npc_hp = not->npc_hp;
+				damagedPacket.npc_id = not->npc_id;
+				damagedPacket.gained_damage = not->gained_damage;
+
+				Object *o = world->GetObjectById(not->npc_id);
+
+				auto iter_b = world->GetPlayerBegin(o->getCurrSectorX(), o->getCurrSectorY());
+				auto iter_e = world->GetPlayerEnd(o->getCurrSectorX(), o->getCurrSectorY());
+
+				unsigned char* pk = reinterpret_cast<unsigned char*>(&packet);
+				
+				for (; iter_b != iter_e; ++iter_b)
+				{
+					if((*iter_b).second->GetType() == ObjectType::Player)
+						Send(socketIds[(*iter_b).second->GetId()], pk);
+				}
+				
 				break;
 			}
 			case ID_Notify_NPC_To_World_NPCAttackPlayer:
@@ -457,7 +501,6 @@ void WorldServer::OnCloseSocket(const int id)
 	Logging(L"Player %d is closed", id);
 
 	Lock();
-	socketIds[objects[id]->GetId()] = id;
 	world->DeleteObject(objects[id]);
 	objects[id] = nullptr;
 	Unlock();
@@ -465,60 +508,70 @@ void WorldServer::OnCloseSocket(const int id)
 
 void WorldServer::PlayerAttackUpdate(unsigned int id, WorldServer * self)
 {
-	Player *p = dynamic_cast<Player*>(self->objects[id]);
-
-	if (p->GetCurrentState() == ObjectState::Battle)
+	if (self->objects[id] != nullptr)
 	{
-		unsigned int attack_list[8];
+		Player *p = dynamic_cast<Player*>(self->objects[id]);
 
-		int attack_list_count = 0;
+		if (p == nullptr || p->GetCurrentState() != ObjectState::Battle)
+			return;
 
-		unsigned short my_x = p->GetX();
-		unsigned short my_y = p->GetY();
-
-		//ToDo : 월드의 경계(최대, 최소) 처리 필요
-		for (int i = my_y - 1; i < my_y + 1; ++i)
+		if (p->GetCurrentState() == ObjectState::Battle)
 		{
-			for (int j = my_x - 1; j < my_x + 1; ++j)
-			{
-				Object *o = self->world->GetObject(j, i);
+			unsigned int attack_list[8];
 
-				if (o != nullptr && o->GetType() == ObjectType::NonPlayer)
+			int attack_list_count = 0;
+
+			unsigned short my_x = p->GetX();
+			unsigned short my_y = p->GetY();
+
+			//ToDo : 월드의 경계(최대, 최소) 처리 필요
+			for (int i = my_y - 1; i <= my_y + 1; ++i)
+			{
+				for (int j = my_x - 1; j <= my_x + 1; ++j)
 				{
-					attack_list[attack_list_count++]= self->world->GetObject(j, i)->GetId();
+					Object *o = self->world->GetObject(j, i);
+
+					if (o != nullptr && o->GetType() == ObjectType::NonPlayer)
+					{
+						attack_list[attack_list_count++] = self->world->GetObject(j, i)->GetId();
+					}
 				}
 			}
-		}
 
-		Notify_Player_Attack_NPC packet;
-		packet.damage = p->GetBaseDamage();
-
-		if (attack_list_count == 0)
-		{
-			packet.npc_id = 0;
-			Send(id, reinterpret_cast<unsigned char*>(&packet));
-		}
-		else
-		{
-			for (int i = 0; i < attack_list_count; ++i)
+			if (attack_list_count == 0)
 			{
-				packet.npc_id = attack_list[i];
+				Notify_Player_Attack_NPC packet;
+				packet.damage = p->GetBaseDamage();
+
+				packet.npc_id = 0;
 				Send(id, reinterpret_cast<unsigned char*>(&packet));
-
-				Notify_World_To_NPC_PlayerAttackNPC attack_packet;
-				attack_packet.attacker_id = p->GetId();
-				attack_packet.damage = p->GetRealDamage();
-				attack_packet.npc_id = attack_list[i];
-
-				SendToInternal("NPC", reinterpret_cast<unsigned char*>(&attack_packet));
 			}
+			else
+			{
+				for (int i = 0; i < attack_list_count; ++i)
+				{
+					Notify_Player_Attack_NPC packet;
+					packet.damage = p->GetBaseDamage();
+
+					packet.npc_id = attack_list[i];
+					Send(id, reinterpret_cast<unsigned char*>(&packet));
+
+					Notify_World_To_NPC_PlayerAttackNPC attack_packet;
+					attack_packet.attacker_id = p->GetId();
+					attack_packet.damage = p->GetRealDamage();
+					attack_packet.npc_id = attack_list[i];
+
+					SendToInternal("NPC", reinterpret_cast<unsigned char*>(&attack_packet));
+				}
+			}
+
+			Event attack_event;
+			attack_event.provider = id;
+			attack_event.event_type = IOCPOpType::OpPlayerAttack;
+
+			self->m_timerEvents.Enqueue(1000, attack_event);
 		}
 
-		Event attack_event;
-		attack_event.provider = id;
-		attack_event.event_type = IOCPOpType::OpPlayerAttack;
-
-		self->m_timerEvents.Enqueue(1000, attack_event);
 	}
 }
 
