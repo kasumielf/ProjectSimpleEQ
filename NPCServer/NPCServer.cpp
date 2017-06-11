@@ -43,14 +43,14 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 
 		if (x > 0 && y > 0)
 		{
-			tinyxml2::XMLElement *elem = node->FirstChildElement("Position");
-			npc->SetX(atoi(elem->Attribute("x")));
-			npc->SetY(atoi(elem->Attribute("y")));
+			npc->SetX(x);
+			npc->SetY(y);
 		}
 		else
 		{
-			npc->SetX(x);
-			npc->SetY(y);
+			tinyxml2::XMLElement *elem = node->FirstChildElement("Position");
+			npc->SetX(atoi(elem->Attribute("x")));
+			npc->SetY(atoi(elem->Attribute("y")));
 		}
 
 		elem = node->FirstChildElement("Level");
@@ -140,7 +140,7 @@ void NPCServer::InitTemporaryNPCs()
 //		luabind::def("CreateNPC", &NPCServer::CreateNPC)
 //	];
 
-	//CreateNPCFromResource("Monsters/Captain001.xml", 0, 0);
+	CreateNPCFromResource("Monsters/Captain001.xml", 0, 0);
 }
 
 void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)

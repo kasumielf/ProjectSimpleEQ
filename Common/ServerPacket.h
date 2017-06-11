@@ -18,8 +18,6 @@ const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
 const unsigned char ID_Notify_NPC_Damaged = 73;
 
-
-
 #pragma pack(push, 1)
 struct LOGIN_OK : BasePacket
 {

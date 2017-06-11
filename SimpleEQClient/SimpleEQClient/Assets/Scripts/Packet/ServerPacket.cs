@@ -21,6 +21,9 @@ namespace ServerPacket
             ID_Notify_Player_Attack_NPC = 71,
             ID_Notify_NPC_Attack_Player = 72,
             ID_Notify_NPC_Damaged = 73,
+            ID_Notify_Player_Die = 20,
+            ID_Notify_Player_Info = 21,
+
     }
 
     [Serializable]
@@ -211,6 +214,34 @@ namespace ServerPacket
         public uint npc_id;
         public ushort npc_hp;
         public ushort gained_damage;
+    };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    class Notify_Player_Die : BasePacket
+    {
+        Notify_Player_Die()
+        {
+            PACKET_ID = PacketId.ID_Notify_Player_Die;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Die));
+        }
+    };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    class Notify_Player_Info : BasePacket
+    {
+        Notify_Player_Info()
+        {
+            PACKET_ID = PacketId.ID_Notify_Player_Info;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Info));
+        }
+
+        public ushort HP;
+        public ushort LEVEL;
+        public ulong EXP;
+        public ushort max_hp;
+        public ushort base_damage;
     };
 }
 

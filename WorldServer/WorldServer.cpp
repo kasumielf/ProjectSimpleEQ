@@ -117,6 +117,13 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 
 					objects[id] = p;
 
+					Notify_World_To_NPC_PlayerEntered enter_packet;
+					enter_packet.player_id = p->GetId();
+					enter_packet.x = p->GetX();
+					enter_packet.y = p->GetY();
+					
+					SendToInternal("NPC", reinterpret_cast<unsigned char*>(&enter_packet));
+
 					Event player_update_event;
 					player_update_event.event_type = IOCPOpType::OpPlayerUpdate;
 					player_update_event.provider = id;
@@ -218,6 +225,8 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 				update_packet.x = myPlayer->GetX();
 				update_packet.y = myPlayer->GetY();
 
+				SendToInternal("NPC", reinterpret_cast<unsigned char*>(&update_packet));
+
 				Notify_Player_Move_Position notify;
 				notify.id = id;
 				notify.x = myPlayer->GetX();
@@ -243,8 +252,8 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 
 				int dest_i = 1 + start_i, dest_j = 1 + start_j;
 
-				std::unordered_map<short, ObjectType> new_view_list;
-				std::unordered_map<short, ObjectType> del_view_list;
+				std::unordered_map<unsigned int, ObjectType> new_view_list;
+				std::unordered_map<unsigned int, ObjectType> del_view_list;
 
 				for (int i = start_i; i <= dest_i; i++)
 				{
@@ -280,7 +289,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 									OverlappedEx overlapped;
 									overlapped.optype = IOCPOpType::OpPlayerMove;
 
-									new_view_list.insert(std::make_pair((*iter_b).second->GetId(), (*iter_b).second->GetType()));
+									new_view_list[(*iter_b).second->GetId()] = (*iter_b).second->GetType();
 
 									if ((*iter_b).second->GetType() != ObjectType::NonPlayer)
 									{
@@ -468,7 +477,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 				infoPacket.EXP = p->GetExp();
 				infoPacket.base_damage = p->GetBaseDamage();
 
-				Send(not->remover_id, reinterpret_cast<unsigned char*>(&infoPacket));
+				Send(socketIds[not->remover_id], reinterpret_cast<unsigned char*>(&infoPacket));
 
 				break;
 			}

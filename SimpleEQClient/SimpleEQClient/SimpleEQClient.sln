@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2015
+# Visual Studio 2017
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleEQClient.Plugins", "SimpleEQClient.Plugins.csproj", "{88135BEF-9A88-8BE9-1FFE-3A6FFF8D09F3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleEQClient", "SimpleEQClient.csproj", "{1104E5F1-F5C5-EA9B-E0D8-E94873D02A75}"
