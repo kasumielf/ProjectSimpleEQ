@@ -11,6 +11,8 @@ const unsigned char ID_ADD_OBJECT = 16;
 const unsigned char ID_CONNECT_SERVER = 17;
 const unsigned char ID_Notify_Player_Enter = 18;
 const unsigned char ID_Notify_Player_Move = 19;
+const unsigned char ID_Notify_Player_Die = 20;
+const unsigned char ID_Notify_Player_Info = 21;
 
 const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
@@ -185,6 +187,30 @@ struct Notify_NPC_Damaged : BasePacket
 	unsigned int npc_id;
 	unsigned short npc_hp;
 	unsigned short gained_damage;
+};
+
+struct Notify_Player_Die : BasePacket
+{
+	Notify_Player_Die()
+	{
+		PACKET_ID = ID_Notify_Player_Die;
+		SIZE = sizeof(Notify_Player_Die);
+	}
+};
+
+struct Notify_Player_Info : BasePacket
+{
+	Notify_Player_Info()
+	{
+		PACKET_ID = ID_Notify_Player_Info;
+		SIZE = sizeof(Notify_Player_Info);
+	}
+
+	unsigned short HP;
+	unsigned short LEVEL;
+	unsigned long EXP;
+	unsigned short max_hp;
+	unsigned short base_damage;
 };
 
 #pragma pack(pop)

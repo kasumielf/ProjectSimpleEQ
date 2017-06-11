@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Monster>
+	<Name value="레벨 3 몬스터"/>
+	<Level>3</Level>
+	<Exp>300</Exp>
+	<MaxHp>300</MaxHp>
+	<BaseDamage>20</BaseDamage>
+	<FactionGroup>1</FactionGroup>
+	<RespawnTime>60000</RespawnTime>
+</Monster>

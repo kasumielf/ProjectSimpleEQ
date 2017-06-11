@@ -4,8 +4,104 @@
 #include "../Common/InnerResponsePacket.h"
 #include "../Common/InnerNotifyPacket.h"
 
+NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity, port), last_add_npc_id(NPC_START_ID)
+{
+	AttachIOCPEvent(IOCPOpType::OpNPCAttack, std::bind(&NPCServer::NPCAttackUpdate, this, std::placeholders::_1, this));
+}
+
 NPCServer::~NPCServer()
 {
+}
+
+void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x, unsigned short y)
+{
+	tinyxml2::XMLDocument doc;
+	tinyxml2::XMLNode *node;
+
+	int error = doc.LoadFile(xmlfilename);
+
+	if (error == 0)
+	{
+		int npc_id = last_add_npc_id + 1;
+		NonPlayer *npc = new NonPlayer(npc_id, -1);
+
+		wchar_t name[12];
+		unsigned int level;
+		unsigned int exp;
+		unsigned int max_hp;
+		unsigned int base_damage;
+		unsigned int faction_group;
+		double respawn_time;
+
+		node = doc.FirstChild();
+
+		tinyxml2::XMLElement *elem = node->FirstChildElement("Name");
+
+		size_t cs;
+		mbstowcs_s(&cs, name, 12, elem->Attribute("value"), 12);
+		npc->SetName(name);
+
+		if (x > 0 && y > 0)
+		{
+			tinyxml2::XMLElement *elem = node->FirstChildElement("Position");
+			npc->SetX(atoi(elem->Attribute("x")));
+			npc->SetY(atoi(elem->Attribute("y")));
+		}
+		else
+		{
+			npc->SetX(x);
+			npc->SetY(y);
+		}
+
+		elem = node->FirstChildElement("Level");
+		elem->QueryUnsignedText(&level);
+		elem = node->FirstChildElement("Exp");
+		elem->QueryUnsignedText(&exp);
+		elem = node->FirstChildElement("MaxHp");
+		elem->QueryUnsignedText(&max_hp);
+		elem = node->FirstChildElement("BaseDamage");
+		elem->QueryUnsignedText(&base_damage);
+		elem = node->FirstChildElement("FactionGroup");
+		elem->QueryUnsignedText(&faction_group);
+		elem = node->FirstChildElement("RespawnTime");
+		elem->QueryDoubleText(&respawn_time);
+
+		npc->SetLevel(level);
+		npc->SetExp(exp);
+		npc->SetMaxHp(max_hp);
+		npc->SetHP(max_hp);
+		npc->SetBaseDamage(base_damage);
+		npc->SetFactionGroup(faction_group);
+		npc->SetRespawnTime(respawn_time);
+
+		last_add_npc_id = npc_id;
+
+		CreateNPC(npc);
+	}
+	else
+	{
+		Logging(L"tinyXML2 error : %d", error);
+	}
+}
+
+void NPCServer::CreateNPC(NonPlayer * npc)
+{
+	Notify_NPC_To_World_NPCreatedAdd_NPC packet;
+
+	packet.curr_hp = npc->GetHP();
+	packet.faction_group = npc->GetFactionGroup();
+	packet.id = npc->GetId();
+	packet.level = npc->GetLevel();
+	packet.max_hp = npc->GetMaxHp();
+	packet.x = npc->GetX();
+	packet.y = npc->GetY();
+
+	wcscpy_s(packet.name, npc->GetName());
+
+	npcs[npc->GetId()]= npc;
+
+	SendToInternal("World", reinterpret_cast<unsigned char*>(&packet));
+
 }
 
 void NPCServer::ClearNPCs()
@@ -37,41 +133,54 @@ void NPCServer::ClearPlayers()
 
 void NPCServer::InitTemporaryNPCs()
 {
-	// 임시 테스트용 NPC를 생성하는 코드
+	//lua_State *l = luaL_newstate();
+	//luabind::open(l);
+//	luabind::module(l)
+//	[
+//		luabind::def("CreateNPC", &NPCServer::CreateNPC)
+//	];
 
-	const int temporary_npc_count = 1000;
+	//CreateNPCFromResource("Monsters/Captain001.xml", 0, 0);
+}
 
-	for(int i=0;i<temporary_npc_count;++i)
+void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
+{
+	if (self->npcs[id] != nullptr)
 	{
-		int id = i + 20000;
-		NonPlayer* np = new NonPlayer(id, 60000);
+		NonPlayer *p = dynamic_cast<NonPlayer*>(self->npcs[id]);
 
-		np->SetCurrentState(ObjectState::Idle);
-		np->SetName(L"테스트 NPC");
-		np->SetLevel(rand() % 5);
-		np->SetBaseDamage(100);
-		np->SetMaxHp(np->GetLevel() * 200);
-		np->SetHP(np->GetMaxHp());
-		np->SetFactionGroup(100);
-		np->SetX(rand() % MAX_WORLD_WIDTH);
-		np->SetY(rand() % MAX_WORLD_HEIGHT);
+		if (p == nullptr || p->GetCurrentState() != ObjectState::Battle)
+			return;
+	
+		if (p->GetCurrentState() == ObjectState::Battle)
+		{
+			unsigned short my_x = p->GetX();
+			unsigned short my_y = p->GetY();
 
-		npcs[id] = np;
+			unsigned short target_x = self->players[p->GetAttackTarget()]->GetX();
+			unsigned short target_y = self->players[p->GetAttackTarget()]->GetX();
 
-		Notify_NPC_To_World_NPCreatedAdd_NPC packet;
+			if (self->IsClosed(my_x, my_y, target_x, target_y))
+			{
+				Notify_NPC_To_World_NPCAttackPlayer packet;
+				packet.npc_id = p->GetId();
+				packet.target_id = p->GetAttackTarget();
+				packet.damage = p->GetRealDamage();
 
-		packet.curr_hp = np->GetHP();
-		packet.faction_group = np->GetFactionGroup();
-		packet.id = np->GetId();
-		packet.level = np->GetLevel();
-		packet.max_hp = np->GetMaxHp();
-		packet.x = np->GetX();
-		packet.y = np->GetY();
+				SendToInternal("World", reinterpret_cast<unsigned char*>(&packet));
+			}
+			else
+			{
+				// ToDo : 플레이어 따라가기	
+			}
 
-		wcscpy_s(packet.name, np->GetName());
-		SendToInternal("World", reinterpret_cast<unsigned char*>(&packet));
-		Sleep(10);
-	};
+			Event attack_event;
+			attack_event.provider = id;
+			attack_event.event_type = IOCPOpType::OpNPCAttack;
+
+			self->m_timerEvents.Enqueue(1000, attack_event);
+		}
+	}
 }
 
 void NPCServer::ProcessPacket(const int id, unsigned char * packet)
@@ -118,6 +227,13 @@ void NPCServer::ProcessPacket(const int id, unsigned char * packet)
 					{
 						npc->SetCurrentState(ObjectState::Battle);
 						npc->SetAttackTarget(not->attacker_id);
+
+						Event attack_event;
+						attack_event.provider = not->npc_id;
+						attack_event.event_type = IOCPOpType::OpNPCAttack;
+
+						m_timerEvents.Enqueue(1000, attack_event);
+
 					}
 
 					unsigned int hp = npc->GetHP();
@@ -174,4 +290,9 @@ void NPCServer::Logging(const wchar_t * msg, ...)
 	vwprintf_s(msg, ap);
 	va_end(ap);
 	std::cout << std::endl;
+}
+
+bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
+{
+	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1 * 1;
 }

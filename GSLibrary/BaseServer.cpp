@@ -13,7 +13,6 @@ BaseServer::~BaseServer()
 
 void BaseServer::Init()
 {
-
 	WSADATA wsa;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)

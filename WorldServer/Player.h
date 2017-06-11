@@ -34,6 +34,8 @@ public:
 	void SetMaxHp(unsigned int _hp) { max_hp = _hp; }
 	void SetBaseDamage(unsigned int _dmg) { base_damage = _dmg; }
 
+	void GainExp(unsigned long _exp);
+
 	const unsigned int GetSocketId() { return socket_id; }
 	const unsigned int GetLevel() { return level; }
 	const unsigned int GetExp() { return exp; }

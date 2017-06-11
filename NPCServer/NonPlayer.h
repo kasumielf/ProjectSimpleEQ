@@ -17,6 +17,9 @@ private:
 	double respawn_time;
 
 	unsigned int attack_target;
+//	lua_State *ls;
+
+	unsigned char attack_count;
 
 public:
 	NonPlayer(unsigned int _id, double _rtime) : Object(_id, ObjectType::NonPlayer), respawn_time(_rtime) {}
@@ -30,17 +33,19 @@ public:
 	void SetBaseDamage(unsigned int _dmg) { base_damage = _dmg; }
 	void SetFactionGroup(unsigned int _grp) { faction_group = _grp; }
 	void SetAttackTarget(unsigned int _target) { attack_target = _target; }
+	void SetRespawnTime(double _rt) { respawn_time = _rt; }
 
 	const unsigned int GetLevel() { return level; }
 	const unsigned int GetExp() { return exp; }
 	const unsigned int GetHP() { return curr_hp; }
 	const unsigned int GetMaxHp() { return max_hp; }
 
-	const unsigned int GetRealDamage();
+	const unsigned int GetRealDamage() { return base_damage; }
 	const unsigned int GetFactionGroup() { return faction_group; }
 	const double GetRespawnTime() { return respawn_time; }
 	const unsigned int GetAttackTarget() { return attack_target; }
 
+//	const lua_State* GetLuaState() { return ls; }
 	virtual void Update();
 };
 

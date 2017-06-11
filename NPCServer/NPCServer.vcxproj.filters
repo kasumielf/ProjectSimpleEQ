@@ -13,6 +13,9 @@
     <Filter Include="Objects">
       <UniqueIdentifier>{8425557e-9dc6-4e89-8931-7c02c38e0ff5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tinyXml2">
+      <UniqueIdentifier>{150a9f3b-f06a-45fd-8eeb-470b2ae6522e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -24,6 +27,9 @@
     </ClCompile>
     <ClCompile Include="Object.cpp">
       <Filter>Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml2\tinyxml2.cpp">
+      <Filter>tinyXml2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -42,5 +48,11 @@
     <ClInclude Include="ObjectType.h">
       <Filter>Objects</Filter>
     </ClInclude>
+    <ClInclude Include="tinyxml2\tinyxml2.h">
+      <Filter>tinyXml2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

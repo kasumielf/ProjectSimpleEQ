@@ -22,6 +22,7 @@ public:
 	World* const GetWorldPtr() { return world; }
 	
 	void PlayerAttackUpdate(unsigned int id, WorldServer* self);
+	void PlayerUpdate(unsigned int id, WorldServer* self);
 
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
 

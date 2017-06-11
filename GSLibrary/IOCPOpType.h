@@ -6,5 +6,7 @@ enum class IOCPOpType
 	OpRecv,
 	OpPlayerAttack,
 	OpPlayerMove,
+	OpPlayerUpdate,
+	OpNPCAttack,
 	OpNPCUpdate,
 };

@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 	server.Start();
 	Sleep(5000);
 	server.Connect("World", "127.0.0.1", 4003);
-	Sleep(10000);
+	Sleep(5000);
 	server.InitTemporaryNPCs();
 
 	while (true)

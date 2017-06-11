@@ -1,0 +1,10 @@
+<Monster>
+	<Name value="´ëÀå"/>
+	<Position x="10" y = "10"/>
+	<Level>5</Level>
+	<Exp>500</Exp>
+	<MaxHp>500</MaxHp>
+	<BaseDamage>30</BaseDamage>
+	<FactionGroup>1</FactionGroup>
+	<RespawnTime>60000</RespawnTime>
+</Monster>

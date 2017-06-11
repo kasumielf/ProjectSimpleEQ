@@ -17,6 +17,7 @@ WorldServer::WorldServer(const int capacity, const short port) : BaseServer(capa
 	}
 
 	AttachIOCPEvent(IOCPOpType::OpPlayerAttack, std::bind(&WorldServer::PlayerAttackUpdate, this, std::placeholders::_1, this));
+	AttachIOCPEvent(IOCPOpType::OpPlayerUpdate, std::bind(&WorldServer::PlayerUpdate, this, std::placeholders::_1, this));
 }
 
 WorldServer::~WorldServer()
@@ -115,6 +116,13 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 					socketIds[p->GetId()] = id;
 
 					objects[id] = p;
+
+					Event player_update_event;
+					player_update_event.event_type = IOCPOpType::OpPlayerUpdate;
+					player_update_event.provider = id;
+
+					m_timerEvents.Enqueue(1000, player_update_event);
+
 					Send(id, reinterpret_cast<unsigned char*>(&res));
 
 					world->SetSector(p, p->GetX(), p->GetY());
@@ -438,19 +446,30 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 				auto iter_b = world->GetPlayerBegin(o->getCurrSectorX(), o->getCurrSectorY());
 				auto iter_e = world->GetPlayerEnd(o->getCurrSectorX(), o->getCurrSectorY());
 
-				unsigned char* pk = reinterpret_cast<unsigned char*>(&packet);
+				unsigned char* pk = reinterpret_cast<unsigned char*>(&removePacket);
 
-				Lock();
 				for (; iter_b != iter_e; ++iter_b)
 				{
 					if ((*iter_b).second->GetType() == ObjectType::Player)
 						Send(socketIds[(*iter_b).second->GetId()], pk);
 				}
-				Unlock();
 
 				world->RemoveObject(o->GetX(), o->GetY());
 				world->DeleteObject(o);
-				
+
+				Player *p = dynamic_cast<Player*>(world->GetObjectById(not->remover_id));
+				p->GainExp(not->gained_exp);
+
+				Notify_Player_Info infoPacket;
+
+				infoPacket.HP = p->GetHP();
+				infoPacket.max_hp = p->GetMaxHp();
+				infoPacket.LEVEL = p->GetLevel();
+				infoPacket.EXP = p->GetExp();
+				infoPacket.base_damage = p->GetBaseDamage();
+
+				Send(not->remover_id, reinterpret_cast<unsigned char*>(&infoPacket));
+
 				break;
 			}
 			case ID_Notify_NPC_To_World_NPCDamaged:
@@ -467,7 +486,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 				auto iter_b = world->GetPlayerBegin(o->getCurrSectorX(), o->getCurrSectorY());
 				auto iter_e = world->GetPlayerEnd(o->getCurrSectorX(), o->getCurrSectorY());
 
-				unsigned char* pk = reinterpret_cast<unsigned char*>(&packet);
+				unsigned char* pk = reinterpret_cast<unsigned char*>(&damagedPacket);
 				
 				for (; iter_b != iter_e; ++iter_b)
 				{
@@ -479,8 +498,56 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 			}
 			case ID_Notify_NPC_To_World_NPCAttackPlayer:
 			{
+				Notify_NPC_To_World_NPCAttackPlayer * not = reinterpret_cast<Notify_NPC_To_World_NPCAttackPlayer*>(packet);
 
-				// ToDo : Broadcast Player is attacked
+				unsigned short damage = not->damage;
+				unsigned int target_id = not->target_id;
+				unsigned short npc_id = not->npc_id;
+
+				Object *o = world->GetObjectById(npc_id);
+				Player *p = dynamic_cast<Player*>(world->GetObjectById(target_id));
+
+				bool player_die = false;
+				Lock();
+				unsigned short hp = p->GetHP();
+				hp -= damage;
+
+				if (hp <= damage)
+				{
+					hp = 0;
+					p->SetCurrentState(ObjectState::Die);
+					player_die = true;
+
+				}
+
+				p->SetHP(hp);
+				Unlock();
+
+				// ToDo : 람다를 활용해서 중복 코드랑 코드 길이를 줄여볼 것.
+				auto iter_b = world->GetPlayerBegin(o->getCurrSectorX(), o->getCurrSectorY());
+				auto iter_e = world->GetPlayerEnd(o->getCurrSectorX(), o->getCurrSectorY());
+
+				Noify_NPC_Attack_Player attackPacket;
+				attackPacket.npc_id = not->npc_id;
+				attackPacket.damage = not->damage;
+
+				unsigned char* pk = reinterpret_cast<unsigned char*>(&attackPacket);
+
+				for (; iter_b != iter_e; ++iter_b)
+				{
+					if ((*iter_b).second->GetType() == ObjectType::Player)
+					{
+						Send(socketIds[(*iter_b).second->GetId()], pk);
+
+						if (player_die == true)
+						{
+							REMOVE_OBJECT removePacket;
+							removePacket.ID = not->target_id;
+							Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&removePacket));
+						}
+					}
+				}
+
 				break;
 			}
 		}
@@ -573,6 +640,11 @@ void WorldServer::PlayerAttackUpdate(unsigned int id, WorldServer * self)
 		}
 
 	}
+}
+
+void WorldServer::PlayerUpdate(unsigned int id, WorldServer * self)
+{
+	self->Logging(L"Player Update! from %d & %d", id, self->objects[id]->GetId());
 }
 
 bool WorldServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
