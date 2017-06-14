@@ -1,7 +1,6 @@
 #pragma once
 
 const short MAX_PACKET_BUFFER_SIZE = 256;
-const short MAX_CHAT_MESSAGE_SIZE = 100;
 const short MAX_WORLD_WIDTH = 300;
 const short MAX_WORLD_HEIGHT = 300;
 
@@ -20,3 +19,5 @@ const unsigned short MAX_SECTOR_HEIGHT = 15;
 
 const unsigned short MAX_SIGHT_RANGE = 10;
 const unsigned short NPC_START_ID = 12000;
+
+const short MAX_CHAT_MESSAGE_LENGTH = 140;

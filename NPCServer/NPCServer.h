@@ -32,6 +32,13 @@ public:
 	virtual void Logging(const wchar_t* msg, ...);
 	virtual void OnCloseSocket(const int id) {}
 
+	void PlayerEntered(const int id, Notify_World_To_NPC_PlayerEntered * not);
+	void PlayerExit(const int id, Notify_World_To_NPC_PlayerExit * not);
+	void PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNPC * not);
+	void PlayerMove(const int id, Notify_World_To_NPC_PlayerMove * not);
+	void NPCStopAttackPlayer(const int id, Notify_World_To_NPC_NPCStopAttackPlayer * not);
+	void PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat * req);
+
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
 };
 

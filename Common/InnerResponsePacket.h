@@ -6,6 +6,7 @@
 const unsigned char ID_Response_DB_To_Auth_UserExist = 50;
 const unsigned char ID_Response_DB_To_World_GetUserStatus = 51;
 const unsigned char ID_Response_DB_To_World_UpdateUserStatus = 52;
+const unsigned char ID_Response_NPC_To_World_NPCMessage = 53;
 
 // for world
 const unsigned char ID_Response_World_To_Auth_AllocateUser = 53;
@@ -67,4 +68,16 @@ struct Response_World_To_Auth_AllocateUser : InnerBasePacket
 	unsigned int client_id;
 	unsigned int user_uid;
 };
+
+struct Response_NPC_To_World_NPCMessage : InnerBasePacket
+{
+	Response_NPC_To_World_NPCMessage()
+	{
+		PACKET_ID = ID_Response_NPC_To_World_NPCMessage;
+		SIZE = sizeof(Response_NPC_To_World_NPCMessage);
+	}
+	unsigned int npc_id;
+	wchar_t message[MAX_CHAT_MESSAGE_LENGTH];
+};
+
 #pragma pack(pop)

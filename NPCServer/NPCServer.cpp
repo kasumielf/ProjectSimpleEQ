@@ -193,100 +193,34 @@ void NPCServer::ProcessPacket(const int id, unsigned char * packet)
 		{
 			case ID_Notify_World_To_NPC_PlayerEntered:
 			{
-				Notify_World_To_NPC_PlayerEntered *not = reinterpret_cast<Notify_World_To_NPC_PlayerEntered*>(packet);
-				
-				Object* player = new Object(not->player_id, ObjectType::Player);
-
-				player->SetX(not->x);
-				player->SetY(not->y);
-
-				players.insert(std::make_pair(player->GetId(), player));
+				PlayerEntered(id, reinterpret_cast<Notify_World_To_NPC_PlayerEntered*>(packet));
 				break;
 			}
 			case ID_Notify_World_To_NPC_PlayerExit:
 			{
-				Notify_World_To_NPC_PlayerExit * not = reinterpret_cast<Notify_World_To_NPC_PlayerExit*>(packet);
-
-				if (players.count(not->player_id))
-				{
-					players.erase(not->player_id);
-				}
-
+				PlayerExit(id, reinterpret_cast<Notify_World_To_NPC_PlayerExit*>(packet));
 				break;
 			}
 			case ID_Notify_World_To_NPC_PlayerAttackNPC:
 			{
-				Notify_World_To_NPC_PlayerAttackNPC * not = reinterpret_cast<Notify_World_To_NPC_PlayerAttackNPC*>(packet);
-
-				if (npcs.count(not->npc_id) > 0)
-				{
-					Lock();
-					NonPlayer *npc = npcs[not->npc_id];
-					
-					if (npc->GetCurrentState() == ObjectState::Idle)
-					{
-						npc->SetCurrentState(ObjectState::Battle);
-						npc->SetAttackTarget(not->attacker_id);
-
-						Event attack_event;
-						attack_event.provider = not->npc_id;
-						attack_event.event_type = IOCPOpType::OpNPCAttack;
-
-						PushTimerEvent(1000, attack_event);
-
-					}
-
-					unsigned int hp = npc->GetHP();
-
-					if (hp - not->damage  <= 0)
-					{
-						Notify_NPC_To_World_NPCDieFromPlayer die_notify;
-						die_notify.npc_id = npc->GetId();
-						die_notify.gained_exp = npc->GetExp();
-						die_notify.remover_id = not->attacker_id;
-
-						delete npcs.at(not->npc_id);
-						npcs.erase(not->npc_id);
-
-						Send(id, reinterpret_cast<unsigned char*>(&die_notify));
-					}
-					else
-					{
-						hp -= not->damage;
-
-						Notify_NPC_To_World_NPCDamaged damaged_notify;
-						damaged_notify.gained_damage = not->damage;
-						damaged_notify.npc_hp = npc->GetHP();
-						damaged_notify.npc_id = npc->GetId();
-
-						Send(id, reinterpret_cast<unsigned char*>(&damaged_notify));
-						npc->SetHP(hp);
-					}
-
-					Unlock();
-				}
-
+				PlayerAttackNPC(id, reinterpret_cast<Notify_World_To_NPC_PlayerAttackNPC*>(packet));
 				break;
 			}
 			case ID_Notify_World_To_NPC_PlayerMove:
 			{
-				Notify_World_To_NPC_PlayerMove *not = reinterpret_cast<Notify_World_To_NPC_PlayerMove*>(packet);
-
-				if (players.count(not->player_id) > 0)
-				{
-					players[not->player_id]->SetX(not->x);
-					players[not->player_id]->SetY(not->y);
-				}
+				PlayerMove(id, reinterpret_cast<Notify_World_To_NPC_PlayerMove*>(packet));
 				break;
 			}
 			case ID_Notify_World_To_NPC_NPCStopAttackPlayer:
 			{
-				Notify_World_To_NPC_NPCStopAttackPlayer * not = reinterpret_cast<Notify_World_To_NPC_NPCStopAttackPlayer*>(packet);
-				npcs[not->npc_id]->SetCurrentState(ObjectState::Idle);
-
+				NPCStopAttackPlayer(id, reinterpret_cast<Notify_World_To_NPC_NPCStopAttackPlayer*>(packet));
 				break;
 			}
-
+			case ID_Request_World_To_NPC_PlayerChat:
+			{
+				PlayerSendMessage(id, reinterpret_cast<Request_World_To_NPC_PlayerChat*>(packet));
+				break;
+			}
 		}
 	}
 }
@@ -298,6 +232,108 @@ void NPCServer::Logging(const wchar_t * msg, ...)
 	vwprintf_s(msg, ap);
 	va_end(ap);
 	std::cout << std::endl;
+}
+
+void NPCServer::PlayerEntered(const int id, Notify_World_To_NPC_PlayerEntered * not)
+{
+	Object* player = new Object(not->player_id, ObjectType::Player);
+
+	player->SetX(not->x);
+	player->SetY(not->y);
+
+	players.insert(std::make_pair(player->GetId(), player));
+
+}
+
+void NPCServer::PlayerExit(const int id, Notify_World_To_NPC_PlayerExit * not)
+{
+	if (players.count(not->player_id))
+	{
+		players.erase(not->player_id);
+	}
+}
+
+void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNPC * not)
+{
+	if (npcs.count(not->npc_id) > 0)
+	{
+		Lock();
+		NonPlayer *npc = npcs[not->npc_id];
+
+		if (npc->GetCurrentState() == ObjectState::Idle)
+		{
+			npc->SetCurrentState(ObjectState::Battle);
+			npc->SetAttackTarget(not->attacker_id);
+
+			Event attack_event;
+			attack_event.provider = not->npc_id;
+			attack_event.event_type = IOCPOpType::OpNPCAttack;
+
+			PushTimerEvent(1000, attack_event);
+
+		}
+
+		unsigned int hp = npc->GetHP();
+
+		if (hp - not->damage <= 0)
+		{
+			Notify_NPC_To_World_NPCDieFromPlayer die_notify;
+			die_notify.npc_id = npc->GetId();
+			die_notify.gained_exp = npc->GetExp();
+			die_notify.remover_id = not->attacker_id;
+
+			delete npcs.at(not->npc_id);
+			npcs.erase(not->npc_id);
+
+			Send(id, reinterpret_cast<unsigned char*>(&die_notify));
+		}
+		else
+		{
+			hp -= not->damage;
+
+			Notify_NPC_To_World_NPCDamaged damaged_notify;
+			damaged_notify.gained_damage = not->damage;
+			damaged_notify.npc_hp = npc->GetHP();
+			damaged_notify.npc_id = npc->GetId();
+
+			Send(id, reinterpret_cast<unsigned char*>(&damaged_notify));
+			npc->SetHP(hp);
+		}
+
+		Unlock();
+	}
+}
+
+void NPCServer::PlayerMove(const int id, Notify_World_To_NPC_PlayerMove * not)
+{
+	if (players.count(not->player_id) > 0)
+	{
+		players[not->player_id]->SetX(not->x);
+		players[not->player_id]->SetY(not->y);
+	}
+}
+
+void NPCServer::NPCStopAttackPlayer(const int id, Notify_World_To_NPC_NPCStopAttackPlayer * not)
+{
+	npcs[not->npc_id]->SetCurrentState(ObjectState::Idle);
+	npcs[not->npc_id]->SetAttackTarget(0);
+}
+
+void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat * req)
+{
+	Object *p = players[req->sender_id];
+	NonPlayer *np = npcs[req->target_id];
+
+	if (IsClosed(np->GetX(), np->GetY(), p->GetX(), p->GetY()))
+	{
+		//ToDO Chat Script
+		Response_NPC_To_World_NPCMessage res;
+		res.RESPONSE_ID = req->sender_id;
+		res.npc_id = np->GetId();
+		wcscpy_s(res.message, L"안녕하세요! 좋은 아침입니다!");
+
+		Send(id, reinterpret_cast<unsigned char*>(&res));
+	}
 }
 
 bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)

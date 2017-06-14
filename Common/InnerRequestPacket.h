@@ -10,6 +10,7 @@ const unsigned char ID_Request_World_To_DB_GetUserStatus = 24;
 
 // for NPC Server
 const unsigned char ID_Request_NPC_To_World_NPCMove = 25;
+const unsigned char ID_Request_World_To_NPC_PlayerChat = 27;
 
 // etc
 const unsigned char ID_Request_Auth_To_World_AllocateUser = 26;
@@ -80,13 +81,25 @@ struct Request_Auth_To_World_AllocateUser : InnerBasePacket
 	unsigned int client_id;
 };
 
-struct Request_NPC_To_World_NPCMoveAdd_NPC : InnerBasePacket
+struct Request_NPC_To_World_NPC_Move : InnerBasePacket
 {
-	Request_NPC_To_World_NPCMoveAdd_NPC()
+	Request_NPC_To_World_NPC_Move()
 	{
 		PACKET_ID = ID_Request_NPC_To_World_NPCMove;
-		SIZE = sizeof(Request_NPC_To_World_NPCMoveAdd_NPC);
+		SIZE = sizeof(Request_NPC_To_World_NPC_Move);
 	}
+};
+
+struct Request_World_To_NPC_PlayerChat : InnerBasePacket
+{
+	Request_World_To_NPC_PlayerChat()
+	{
+		PACKET_ID = ID_Request_World_To_NPC_PlayerChat;
+		SIZE = sizeof(Request_World_To_NPC_PlayerChat);
+	}
+	unsigned int sender_id;
+	unsigned int target_id;
+	wchar_t message[MAX_CHAT_MESSAGE_LENGTH];
 };
 
 #pragma pack(pop)

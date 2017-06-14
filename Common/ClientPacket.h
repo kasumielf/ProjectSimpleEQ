@@ -8,6 +8,7 @@ const unsigned char ID_ATTACK = 3;
 const unsigned char ID_CHAT = 4;
 const unsigned char ID_LOGOUT = 5;
 const unsigned char ID_Request_Enter_GameWorld = 6;
+const unsigned char ID_Request_Send_MyChat = 7;
 
 #pragma pack(push, 1)
 struct LOGIN : BasePacket
@@ -72,5 +73,16 @@ struct Request_Enter_GameWorld : BasePacket
 	}
 
 	unsigned int user_uid;
+};
+
+struct Request_Send_MyChat : BasePacket
+{
+	Request_Send_MyChat()
+	{
+		PACKET_ID = ID_Request_Send_MyChat;
+		SIZE = sizeof(Request_Send_MyChat);
+	}
+
+	wchar_t message[MAX_CHAT_MESSAGE_LENGTH];
 };
 #pragma pack(pop)

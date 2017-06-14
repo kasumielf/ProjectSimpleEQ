@@ -14,6 +14,7 @@ const unsigned char ID_Notify_Player_Move = 19;
 const unsigned char ID_Notify_Player_Die = 20;
 const unsigned char ID_Notify_Player_Info = 21;
 const unsigned char ID_Notify_Player_HPRegen = 22;
+const unsigned char ID_Notify_ChatMessage = 23;
 
 const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
@@ -221,6 +222,19 @@ struct Notify_Player_HPRegen : BasePacket
 	}
 	
 	unsigned short curr_hp;
+};
+
+struct Notify_ChatMessage : BasePacket
+{
+	Notify_ChatMessage()
+	{
+		PACKET_ID = ID_Notify_ChatMessage;
+		SIZE = sizeof(Notify_ChatMessage);
+	}
+	
+	unsigned int sender_id;
+	wchar_t sender_name[12];
+	wchar_t message[MAX_CHAT_MESSAGE_LENGTH];
 };
 
 #pragma pack(pop)

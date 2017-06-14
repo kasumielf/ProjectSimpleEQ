@@ -15,7 +15,6 @@ private:
 	std::vector<Player*> players;
 	std::unordered_map<unsigned int, unsigned int> socketIds;
 	std::vector<Status> level_data;
-
 public:
 	WorldServer(const int capacity, const short port);
 	~WorldServer();
@@ -36,5 +35,17 @@ public:
 	void InitStatusTable();
 	void MovePlayer(int id, Player* p);
 
+	void AllocateUser(const int id, Request_Auth_To_World_AllocateUser* req);
+	void GetUserState(const int id, Response_DB_To_World_GetUserStatus* res);
+	void EnterGameWorld(const int id, Request_Enter_GameWorld* req);
+	void Move(const int id, MOVE* req);
+	void Attack(const int id, ATTACK* req);
+	void Logout(const int id, LOGOUT* req);
+	void NPCCreated(const int id, Notify_NPC_To_World_NPCreatedAdd_NPC * not);
+	void NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromPlayer * not);
+	void NPCDamaged(const int id, Notify_NPC_To_World_NPCDamaged * not);
+	void NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPlayer * not);
+	void SendChatMessage(const int id, Request_Send_MyChat* req);
+	void NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage* res);
 };
 
