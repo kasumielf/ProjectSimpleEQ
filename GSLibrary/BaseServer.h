@@ -31,8 +31,6 @@ private :
 	std::vector<std::thread*> m_worker_thread;
 	std::unordered_map<int, BaseSession*> m_sessions;
 	std::unordered_map<std::string, int> m_internals_id;
-
-protected:
 	TimerEventManager m_timerEvents;
 
 public:
@@ -65,5 +63,7 @@ public:
 	virtual void OnCloseSocket(const int id) = 0;
 	virtual void Logging(const wchar_t* msg, ...) = 0;
 	void ErrorDisplay(char* msg, int err_no);
+
+	void PushTimerEvent(double duration, Event evt);
 };
 

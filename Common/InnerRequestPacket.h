@@ -51,6 +51,7 @@ struct Request_World_To_DB_UpdateUserStatus : InnerBasePacket
 	unsigned short x;
 	unsigned short y;
 	unsigned short hp;
+	unsigned short max_hp;
 	unsigned short level;
 	unsigned long exp;
 };

@@ -8,7 +8,7 @@ TimerEventManager::~TimerEventManager()
 {
 }
 
-void TimerEventManager::Enqueue(const double duration, const Event event)
+void TimerEventManager::Push(const double duration, const Event event)
 {
 	TimeEvent ev;
 	auto event_time = std::chrono::high_resolution_clock::now() + std::chrono::duration<double, std::milli>(duration);
@@ -16,40 +16,15 @@ void TimerEventManager::Enqueue(const double duration, const Event event)
 	ev.time = event_time;
 	ev.event = event;
 
-	if (isEmpty())
-	{
-		m_timerEventQueue.push_front(ev);
-	}
-	else
-	{
-		auto iter_b = m_timerEventQueue.begin();
-		auto iter_e = m_timerEventQueue.end();
-
-		for (; iter_b != iter_e; ++iter_b)
-		{
-			if ((*iter_b).time >= event_time)
-			{
-				m_timerEventQueue.insert(iter_b, ev);
-				break;
-			}
-			else
-			{
-				m_timerEventQueue.push_back(ev);
-				break;
-			}
-		}
-	}
+	m_timerEventQueue.push(ev);
 }
 
-const TimeEvent* TimerEventManager::Dequeue()
+const TimeEvent& TimerEventManager::Top()
 {
-	TimeEvent *rtn;
+	return m_timerEventQueue.top();
+}
 
-	if (isEmpty() == false)
-	{
-		rtn = &m_timerEventQueue.front();
-		m_timerEventQueue.pop_front();
-	}
-
-	return rtn;
+void TimerEventManager::Pop()
+{
+	m_timerEventQueue.pop();
 }

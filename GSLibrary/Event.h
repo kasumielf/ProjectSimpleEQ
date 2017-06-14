@@ -9,8 +9,20 @@ typedef struct Event
 	IOCPOpType event_type;
 }Event;
 
-typedef struct TimeEvent
+class TimeEvent
 {
+public:
 	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> time;
 	Event event;
-}TimeEvent;
+	
+	friend bool operator<(const TimeEvent& lhs, const TimeEvent& rhs)
+	{
+		return lhs.time < rhs.time;
+	}
+
+	friend bool operator>(const TimeEvent& lhs, const TimeEvent& rhs)
+	{
+		return lhs.time > rhs.time;
+	}
+
+};

@@ -7,6 +7,7 @@ enum class IOCPOpType
 	OpPlayerAttack,
 	OpPlayerMove,
 	OpPlayerUpdate,
+	OpPlayerDBSave,
 	OpNPCAttack,
 	OpNPCUpdate,
 };

@@ -178,7 +178,7 @@ void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
 			attack_event.provider = id;
 			attack_event.event_type = IOCPOpType::OpNPCAttack;
 
-			self->m_timerEvents.Enqueue(1000, attack_event);
+			self->PushTimerEvent(1000, attack_event);
 		}
 	}
 }
@@ -232,14 +232,13 @@ void NPCServer::ProcessPacket(const int id, unsigned char * packet)
 						attack_event.provider = not->npc_id;
 						attack_event.event_type = IOCPOpType::OpNPCAttack;
 
-						m_timerEvents.Enqueue(1000, attack_event);
+						PushTimerEvent(1000, attack_event);
 
 					}
 
 					unsigned int hp = npc->GetHP();
-					hp -= not->damage;
 
-					if (hp  <= 0)
+					if (hp - not->damage  <= 0)
 					{
 						Notify_NPC_To_World_NPCDieFromPlayer die_notify;
 						die_notify.npc_id = npc->GetId();
@@ -253,6 +252,8 @@ void NPCServer::ProcessPacket(const int id, unsigned char * packet)
 					}
 					else
 					{
+						hp -= not->damage;
+
 						Notify_NPC_To_World_NPCDamaged damaged_notify;
 						damaged_notify.gained_damage = not->damage;
 						damaged_notify.npc_hp = npc->GetHP();
@@ -276,6 +277,13 @@ void NPCServer::ProcessPacket(const int id, unsigned char * packet)
 					players[not->player_id]->SetX(not->x);
 					players[not->player_id]->SetY(not->y);
 				}
+				break;
+			}
+			case ID_Notify_World_To_NPC_NPCStopAttackPlayer:
+			{
+				Notify_World_To_NPC_NPCStopAttackPlayer * not = reinterpret_cast<Notify_World_To_NPC_NPCStopAttackPlayer*>(packet);
+				npcs[not->npc_id]->SetCurrentState(ObjectState::Idle);
+
 				break;
 			}
 

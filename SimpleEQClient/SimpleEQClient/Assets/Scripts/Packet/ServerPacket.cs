@@ -23,7 +23,7 @@ namespace ServerPacket
             ID_Notify_NPC_Damaged = 73,
             ID_Notify_Player_Die = 20,
             ID_Notify_Player_Info = 21,
-
+            ID_Notify_Player_HPRegen = 22
     }
 
     [Serializable]
@@ -202,6 +202,20 @@ namespace ServerPacket
     };
 
     [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    class Notify_NPC_Attack_Player : BasePacket
+    {
+        Notify_NPC_Attack_Player()
+        {
+            PACKET_ID = PacketId.ID_Notify_NPC_Attack_Player;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_NPC_Attack_Player));
+        }
+
+        public uint npc_id;
+        public ushort damage;
+    }
+
+    [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class Notify_NPC_Damaged : BasePacket
     {
@@ -242,6 +256,19 @@ namespace ServerPacket
         public ulong EXP;
         public ushort max_hp;
         public ushort base_damage;
+    };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    class Notify_Player_HPRegen : BasePacket
+    {
+        Notify_Player_HPRegen()
+        {
+            PACKET_ID = PacketId.ID_Notify_Player_HPRegen;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_HPRegen));
+        }
+
+        public ushort curr_hp;
     };
 }
 

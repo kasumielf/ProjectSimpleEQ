@@ -19,4 +19,4 @@ const unsigned short MAX_SECTOR_WIDTH = 15;
 const unsigned short MAX_SECTOR_HEIGHT = 15;
 
 const unsigned short MAX_SIGHT_RANGE = 10;
-const unsigned short NPC_START_ID = 120000;
+const unsigned short NPC_START_ID = 12000;

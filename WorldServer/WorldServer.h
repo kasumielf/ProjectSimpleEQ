@@ -2,14 +2,19 @@
 
 #include "../GSLibrary/BaseServer.h"
 #include "World.h"
+#include "Status.h"
+
+#include <vector>
+
 
 class WorldServer :
 	public BaseServer
 {
 private:
 	World *world;
-	std::vector<Object*> objects;
+	std::vector<Player*> players;
 	std::unordered_map<unsigned int, unsigned int> socketIds;
+	std::vector<Status> level_data;
 
 public:
 	WorldServer(const int capacity, const short port);
@@ -23,8 +28,13 @@ public:
 	
 	void PlayerAttackUpdate(unsigned int id, WorldServer* self);
 	void PlayerUpdate(unsigned int id, WorldServer* self);
+	void PlayerDBSave(unsigned int id, WorldServer * self);
 
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
+	Status& GetLevelData(unsigned int level) { return level_data[level]; }
+
+	void InitStatusTable();
+	void MovePlayer(int id, Player* p);
 
 };
 

@@ -13,6 +13,9 @@
     <Filter Include="WorldServer\Objects\World">
       <UniqueIdentifier>{8204d5d7-1671-48ad-930b-b35b5bc9971d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="WorldServer\tinyXml2">
+      <UniqueIdentifier>{04689018-31ba-4979-b098-ab4bd6ba0138}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -33,6 +36,9 @@
     </ClCompile>
     <ClCompile Include="Sector.cpp">
       <Filter>WorldServer\Objects\World</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyxml2\tinyxml2.cpp">
+      <Filter>WorldServer\tinyXml2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,6 +71,12 @@
     </ClInclude>
     <ClInclude Include="Sector.h">
       <Filter>WorldServer\Objects\World</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2\tinyxml2.h">
+      <Filter>WorldServer\tinyXml2</Filter>
+    </ClInclude>
+    <ClInclude Include="Status.h">
+      <Filter>WorldServer\Objects\Object</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

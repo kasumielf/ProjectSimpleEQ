@@ -14,6 +14,8 @@ const unsigned char ID_Notify_World_To_NPC_PlayerEntered = 106;
 const unsigned char ID_Notify_World_To_NPC_PlayerExit = 107;
 const unsigned char ID_Notify_World_To_NPC_PlayerAttackNPC = 108;
 const unsigned char ID_Notify_World_To_NPC_PlayerMove = 109;
+const unsigned char ID_Notify_World_To_NPC_NPCStopAttackPlayer = 110;
+
 
 #pragma pack(push, 1)
 
@@ -69,6 +71,7 @@ struct Notify_NPC_To_World_NPCDieFromPlayer : InnerBasePacket
 	unsigned int npc_id; unsigned int remover_id;
 	unsigned long gained_exp;
 };
+
 struct Notify_NPC_To_World_NPCMove : InnerBasePacket
 {
 	Notify_NPC_To_World_NPCMove()
@@ -129,5 +132,19 @@ struct Notify_World_To_NPC_PlayerAttackNPC : InnerBasePacket
 	unsigned int npc_id;
 	unsigned short damage;
 };
+
+
+struct Notify_World_To_NPC_NPCStopAttackPlayer : InnerBasePacket
+{
+	Notify_World_To_NPC_NPCStopAttackPlayer()
+	{
+		PACKET_ID = ID_Notify_World_To_NPC_NPCStopAttackPlayer;
+		SIZE = sizeof(Notify_World_To_NPC_NPCStopAttackPlayer);
+	}
+
+	unsigned int npc_id;
+	unsigned int target_id;
+};
+
 
 #pragma pack(pop)

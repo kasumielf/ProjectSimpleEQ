@@ -13,6 +13,7 @@ const unsigned char ID_Notify_Player_Enter = 18;
 const unsigned char ID_Notify_Player_Move = 19;
 const unsigned char ID_Notify_Player_Die = 20;
 const unsigned char ID_Notify_Player_Info = 21;
+const unsigned char ID_Notify_Player_HPRegen = 22;
 
 const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
@@ -136,12 +137,12 @@ struct Notify_Player_Attack_NPC : BasePacket
 	unsigned short damage;
 };
 
-struct Noify_NPC_Attack_Player : BasePacket
+struct Notify_NPC_Attack_Player : BasePacket
 {
-	Noify_NPC_Attack_Player()
+	Notify_NPC_Attack_Player()
 	{
 		PACKET_ID = ID_Notify_NPC_Attack_Player;
-		SIZE = sizeof(Noify_NPC_Attack_Player);
+		SIZE = sizeof(Notify_NPC_Attack_Player);
 	}
 
 	unsigned int npc_id;
@@ -209,6 +210,17 @@ struct Notify_Player_Info : BasePacket
 	unsigned long EXP;
 	unsigned short max_hp;
 	unsigned short base_damage;
+};
+
+struct Notify_Player_HPRegen : BasePacket
+{
+	Notify_Player_HPRegen()
+	{
+		PACKET_ID = ID_Notify_Player_HPRegen;
+		SIZE = sizeof(Notify_Player_HPRegen);
+	}
+	
+	unsigned short curr_hp;
 };
 
 #pragma pack(pop)

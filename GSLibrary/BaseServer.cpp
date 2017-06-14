@@ -444,24 +444,27 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 void BaseServer::TimerThreadFunc(BaseServer * self)
 {
 	OverlappedEx overlapped;
-	TimeEvent *ev;
+	TimeEvent ev;
 
 	while (true)
 	{
 		if (self->m_timerEvents.isEmpty() == false)
 		{
-			ev = &(*self->m_timerEvents.GetQueueBegin());
+			ev = self->m_timerEvents.Top();
 
 			bool done = false;
 
-			auto now = std::chrono::high_resolution_clock::now();
-
-			if (ev->time <= now)
+			while (done == false)
 			{
-				overlapped.optype = ev->event.event_type;
-				PostQueuedCompletionStatus(self->m_iocp_handle, 1, ev->event.provider, reinterpret_cast<LPOVERLAPPED>(&overlapped));
-				self->m_timerEvents.Dequeue();
-				done = true;
+				auto now = std::chrono::high_resolution_clock::now();
+
+				if (ev.time <= now)
+				{
+					overlapped.optype = ev.event.event_type;
+					PostQueuedCompletionStatus(self->m_iocp_handle, 1, ev.event.provider, reinterpret_cast<LPOVERLAPPED>(&overlapped));
+					self->m_timerEvents.Pop();
+					done = true;
+				}
 			}
 		}
 		Sleep(100);
@@ -488,5 +491,12 @@ void BaseServer::ErrorDisplay(char *msg, int err_no)
 		(LPTSTR)&lpMsgBuf, 0, NULL);
 	Logging(L"%s\t%ws", msg, lpMsgBuf);
 	LocalFree(lpMsgBuf);
+}
+
+void BaseServer::PushTimerEvent(double duration, Event evt)
+{
+//	Lock();
+	m_timerEvents.Push(duration, evt);
+//	Unlock();
 }
 

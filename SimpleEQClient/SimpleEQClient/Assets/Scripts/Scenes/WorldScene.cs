@@ -24,9 +24,12 @@ public class WorldScene : MonoBehaviour {
     public Text damageLog;
 
     private Player myPlayer;
+    private Dictionary<uint, Player> players;
     private Dictionary<uint, BaseEnemy> mobs;
     private List<Objects.Object> mySightList;
+    private Dictionary<uint, GameObject> playerObject;
     public GameObject myPlayerObject;
+
 
     MOVE movePacket = new MOVE();
 
@@ -37,6 +40,8 @@ public class WorldScene : MonoBehaviour {
     {
         baseEnemyPrefab = Resources.Load("Prefabs/BaseEnemy", typeof(BaseEnemy)) as BaseEnemy;
         mobs = new Dictionary<uint, BaseEnemy>();
+        playerObject = new Dictionary<uint, GameObject>();
+        players = new Dictionary<uint, Player>();
     }
 
     private void Awake()
@@ -67,8 +72,22 @@ public class WorldScene : MonoBehaviour {
                 }
             case MessageType.UPDATE_USER_POSITION:
                 {
-                    myPlayerObject.transform.position = new Vector3(myPlayer.x, 0.1f, myPlayer.y);
+                    uint user_uid = Convert.ToUInt32(msg.GetParam(0));
+                    ushort x = Convert.ToUInt16(msg.GetParam(1));
+                    ushort y = Convert.ToUInt16(msg.GetParam(2));
 
+                    if(user_uid == myPlayer.id)
+                    {
+                        myPlayer.x = x;
+                        myPlayer.y = y;
+                        myPlayerObject.transform.position = new Vector3(x, 0.1f, y);
+                    }
+                    else
+                    {
+                        players[user_uid].x = x;
+                        players[user_uid].y = y;
+                        playerObject[user_uid].transform.position = new Vector3(x, 0.1f, y);
+                    }
                     break;
                 }
             case MessageType.ATTACK_NPC:
@@ -77,7 +96,7 @@ public class WorldScene : MonoBehaviour {
                     uint attacking_damage = (ushort)msg.GetParam(1);
 
                     if (attacking_id == 0)
-                        damageLog.text += "공격 가능 범위에 아무도 없습니다!\n";
+                        InputTextLine("공격 가능 범위에 아무도 없습니다!");
                     break;
                 }
             case MessageType.CREATE_NPC:
@@ -95,8 +114,18 @@ public class WorldScene : MonoBehaviour {
 
                     break;
                 }
+            case MessageType.PLAYER_DAMAGED:
+                {
+                    uint npc_id = (uint)msg.GetParam(0);
+                    uint damage = (ushort)msg.GetParam(1);
 
-            case MessageType.REMOVE_NPC:
+                    InputTextLine(String.Format("{0}에게 공격을 받아 {1} 대미지를 입었습니다!", mobs[npc_id].baseObject.name, damage));
+
+                    myPlayer.curr_hp -= damage;
+                    break;
+                }
+                
+            case MessageType.REMOVE_OBJECT:
                 {
                     uint id = Convert.ToUInt32(msg.GetParam(0));
 
@@ -113,12 +142,57 @@ public class WorldScene : MonoBehaviour {
                     uint id = Convert.ToUInt32(msg.GetParam(0));
                     ushort hp = Convert.ToUInt16(msg.GetParam(1));
                     ushort dmg = Convert.ToUInt16(msg.GetParam(2));
+                    InputTextLine(String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}", mobs[id].baseObject.name, dmg, hp));
+                    break;
+                }
 
-                    damageLog.text += String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}\n", mobs[id].baseObject.name, dmg, hp);
+            case MessageType.UPDATE_USER_HP:
+                {
+                    ushort hp = Convert.ToUInt16(msg.GetParam(0));
+                    myPlayer.curr_hp = hp;
+                    InputTextLine(String.Format("체력을 회복해 {0} HP가 되었습니다.", hp));
+                    break;
+                }
+            case MessageType.UPDATE_USER_BASEINFO:
+                {
+                    ushort level = Convert.ToUInt16(msg.GetParam(0));
+                    ulong exp = Convert.ToUInt64(msg.GetParam(1));
+                    ushort hp = Convert.ToUInt16(msg.GetParam(2));
+                    ushort maxhp = Convert.ToUInt16(msg.GetParam(3));
+                    ushort basedamage = Convert.ToUInt16(msg.GetParam(4));
+
+                    if(myPlayer.level != level)
+                    {
+                        InputTextLine(String.Format("{0} 레벨에서 {1} 레벨이 되었습니다.", myPlayer.level, level));
+                        myPlayer.level = level;
+                    }
+
+                    if(myPlayer.exp != exp)
+                    {
+                        InputTextLine(String.Format("경험치 {0}을 획득했습니다.", exp - myPlayer.exp));
+                        myPlayer.exp = exp;
+                    }
+
+                    myPlayer.curr_hp = hp;
+                    myPlayer.max_hp = hp;
+                    myPlayer.base_damage = basedamage;
 
                     break;
                 }
 
+        }
+    }
+
+    int line_count = 0;
+
+    private void InputTextLine(String text)
+    {
+        damageLog.text += (text + System.Environment.NewLine);
+        if (line_count++ > 5)
+        {
+            int index = damageLog.text.IndexOf(System.Environment.NewLine);
+            string newtxt = damageLog.text.Substring(index + System.Environment.NewLine.Length);
+            damageLog.text = newtxt;
         }
     }
 
@@ -142,6 +216,7 @@ public class WorldScene : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
         UpdateMyPlayerUI();
 
         if(Input.GetKeyDown(KeyCode.W))
@@ -181,12 +256,10 @@ public class WorldScene : MonoBehaviour {
             if (myPlayer.state == ObjectState.Idle)
             {
                 myPlayer.state = ObjectState.Battle;
-                Debug.Log("Attack Start!");
             }
             else
             {
                 myPlayer.state = ObjectState.Idle;
-                Debug.Log("Attack End!");
             }
 
             ATTACK packet = new ATTACK();
@@ -204,7 +277,7 @@ public class WorldScene : MonoBehaviour {
         {
             myName.text = myPlayer.name;
             myLevel.text = myPlayer.level.ToString();
-            myCurrHp.text = myPlayer.max_hp.ToString();
+            myCurrHp.text = myPlayer.curr_hp.ToString();
             myMaxHp.text = myPlayer.max_hp.ToString();
             myExp.text = myPlayer.exp.ToString();
             myBaseDmg.text = myPlayer.base_damage.ToString();
@@ -226,20 +299,26 @@ public class WorldScene : MonoBehaviour {
             case ServerPacket.PacketId.ID_LOGIN_OK:
                 {
                     ServerPacket.LOGIN_OK res = (ServerPacket.LOGIN_OK)Utility.ByteArrayToObject(data, typeof(ServerPacket.LOGIN_OK));
-                    myPlayer = new Player();
+
+                    Player p = new Player();
                     mySightList = new List<Objects.Object>();
 
-                    myPlayer.id = res.id;
-                    myPlayer.name = new string(res.username.ToCharArray());
-                    myPlayer.exp = res.exp;
-                    myPlayer.curr_hp = res.hp;
-                    myPlayer.max_hp = res.max_hp;
-                    myPlayer.level = res.level;
-                    myPlayer.x = res.x_pos;
-                    myPlayer.y = res.y_pos;
-                    myPlayer.base_damage = res.base_damage;
+                    p.id = res.id;
+                    p.name = new string(res.username.ToCharArray());
+                    p.exp = res.exp;
+                    p.curr_hp = res.hp;
+                    p.max_hp = res.max_hp;
+                    p.level = res.level;
+                    p.x = res.x_pos;
+                    p.y = res.y_pos;
+                    p.base_damage = res.base_damage;
+
+                    myPlayer = p;
 
                     Message msg = new Message(MessageType.UPDATE_USER_POSITION);
+                    msg.Push(p.id);
+                    msg.Push(p.x);
+                    msg.Push(p.y);
                     MessageQueue.getInstance.Enqueue(msg);
                     break;
                 }
@@ -276,7 +355,7 @@ public class WorldScene : MonoBehaviour {
                 {
                     ServerPacket.REMOVE_OBJECT res = (ServerPacket.REMOVE_OBJECT)Utility.ByteArrayToObject(data, typeof(ServerPacket.REMOVE_OBJECT));
 
-                    Message msg = new Message(MessageType.REMOVE_NPC);
+                    Message msg = new Message(MessageType.REMOVE_OBJECT);
                     msg.Push(res.ID);
                     MessageQueue.getInstance.Enqueue(msg);
                     break;
@@ -292,9 +371,50 @@ public class WorldScene : MonoBehaviour {
                     MessageQueue.getInstance.Enqueue(msg);
                     break;
                 }
+            case ServerPacket.PacketId.ID_Notify_Player_HPRegen:
+                {
+                    ServerPacket.Notify_Player_HPRegen res = (ServerPacket.Notify_Player_HPRegen)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_Player_HPRegen));
+
+                    Message msg = new Message(MessageType.UPDATE_USER_HP);
+                    msg.Push(res.curr_hp);
+                    MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+            case ServerPacket.PacketId.ID_Notify_NPC_Attack_Player:
+                {
+                    ServerPacket.Notify_NPC_Attack_Player res = (ServerPacket.Notify_NPC_Attack_Player)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_NPC_Attack_Player));
+                    Message msg = new Message(MessageType.PLAYER_DAMAGED);
+                    msg.Push(res.npc_id);
+                    msg.Push(res.damage);
+                    MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+            case ServerPacket.PacketId.ID_Notify_Player_Move:
+                {
+                    ServerPacket.Notify_Player_Move_Position res = (ServerPacket.Notify_Player_Move_Position)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_Player_Move_Position));
+
+                    Message msg = new Message(MessageType.UPDATE_USER_POSITION);
+                    msg.Push(res.id);
+                    msg.Push(res.x);
+                    msg.Push(res.y);
+                    MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+            case ServerPacket.PacketId.ID_Notify_Player_Info:
+                {
+                    ServerPacket.Notify_Player_Info res = (ServerPacket.Notify_Player_Info)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_Player_Info));
+                    Message msg = new Message(MessageType.UPDATE_USER_BASEINFO);
+                    msg.Push(res.LEVEL);
+                    msg.Push(res.EXP);
+                    msg.Push(res.HP);
+                    msg.Push(res.max_hp);
+                    msg.Push(res.base_damage);
+                    MessageQueue.getInstance.Enqueue(msg);
+
+                    break;
+                }
         }
     }
-
  
     public void GameExit()
     {

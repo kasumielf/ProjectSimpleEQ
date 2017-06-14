@@ -36,8 +36,12 @@ struct Response_DB_To_World_GetUserStatus : InnerBasePacket
 	unsigned short x;
 	unsigned short y;
 	unsigned short hp;
+	unsigned short max_hp;
 	unsigned short level;
 	unsigned long exp;
+	unsigned short start_x;
+	unsigned short start_y;
+
 };
 
 struct Response_DB_To_World_UpdateUserStatus : InnerBasePacket

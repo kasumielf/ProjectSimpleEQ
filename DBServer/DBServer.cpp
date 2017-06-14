@@ -55,19 +55,26 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 					res.level = std::stoi(result->at(L"level"));
 					res.exp = std::stol(result->at(L"exp"));
 					res.hp = std::stoi(result->at(L"hp"));
+					res.max_hp = std::stoi(result->at(L"maxhp"));
 					res.x = std::stoi(result->at(L"x"));
 					res.y = std::stoi(result->at(L"y"));
+					res.start_x = std::stoi(result->at(L"start_x"));
+					res.start_y = std::stoi(result->at(L"start_y"));
 				}
 
 				Send(id, reinterpret_cast<unsigned char*>(&res));
 
 				break;
 			}
-			case ID_Request_World_To_DB_UpdateUserPosition:
+			case ID_Request_World_To_DB_UpdateUserStatus:
 			{
-				Request_World_To_DB_UpdateUserPotision *req = reinterpret_cast<Request_World_To_DB_UpdateUserPotision*>(packet);
+				Request_World_To_DB_UpdateUserStatus *req = reinterpret_cast<Request_World_To_DB_UpdateUserStatus*>(packet);
 				wchar_t query[256];
-				swprintf(query, sizeof(query), L"EXEC USER_UPDATE_LOCATION %d, %d, %d", req->user_uid, req->x, req->y);
+
+				Logging(L"User %d DB Update", req->user_uid);
+
+				swprintf(query, sizeof(query), L"EXEC USER_UPDATE_USERINFO %d, %d, %d, %d, %d, %d, %d",
+					req->user_uid, req->level, req->exp, req->hp, req->max_hp, req->x, req->y);
 				m_db.ExecuteDirect(query);
 
 				break;
