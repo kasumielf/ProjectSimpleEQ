@@ -1,11 +1,10 @@
 <Monster>
-	<Name value="????"/>
-	<Position x="50" y = "50"/>
+	<Name value="¿µÈ¥¼ú»ç"/>
 	<Level>1</Level>
 	<Exp>100000</Exp>
 	<MaxHp>10000</MaxHp>
 	<BaseDamage>100</BaseDamage>
 	<FactionGroup>2</FactionGroup>
 	<RespawnTime>3600000</RespawnTime>
-	<DescriptScript src="Monster/Faction2/Descript/SoulBinder.lua"></DescriptScript>
+	<DescriptScript src="Monster\\Faction2\\Descript\\SoulBinder.lua"></DescriptScript>
 </Monster>

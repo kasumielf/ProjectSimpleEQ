@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Monster>
-	<Name value="ê²½ë¹„ë³‘"/>
+	<Name value="°æºñº´"/>
 	<Position x="30" y="30"/>
 	<Level>10</Level>
 	<Exp>500</Exp>
@@ -8,5 +7,5 @@
 	<BaseDamage>80</BaseDamage>
 	<FactionGroup>2</FactionGroup>
 	<RespawnTime>300000</RespawnTime>
-	<DescriptScript src="Monster/Faction2/Descript/Guard.lua"></DescriptScript>
+	<DescriptScript src="Monster\\Faction2\\Descript\\Guard.lua"></DescriptScript>
 </Monster>

@@ -10,7 +10,7 @@ const long NATURAL_FACTION_VALUE = 0;
 const long HOSTILE_FATCION_VALUE = -10000;
 const long ENEMY_FACTION_VALUE = -30000;
 
-const short MAX_OBJECT_SIGHT = 5;
+const short MAX_OBJECT_SIGHT = 20;
 
 const unsigned int MAX_SESSION_ID_POOL = 100000;
 

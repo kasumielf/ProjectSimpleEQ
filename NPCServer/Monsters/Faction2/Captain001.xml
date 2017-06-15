@@ -1,11 +1,10 @@
 <Monster>
 	<Name value="경비대장"/>
-	<Position x="50" y = "50"/>
 	<Level>20</Level>
 	<Exp>800</Exp>
 	<MaxHp>1800</MaxHp>
 	<BaseDamage>100</BaseDamage>
 	<FactionGroup>2</FactionGroup>
 	<RespawnTime>600000</RespawnTime>
-	<DescriptScript src="Monster/Faction2/Descript/Captain.lua"></DescriptScript>
+	<DescriptScript src="Monster\\Faction2\\Descript\\Captain.lua"></DescriptScript>
 </Monster>

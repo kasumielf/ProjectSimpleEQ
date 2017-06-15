@@ -1,6 +1,5 @@
 <Monster>
 	<Name value="´ëÀå"/>
-	<Position x="50" y = "50"/>
 	<Level>20</Level>
 	<Exp>1000</Exp>
 	<MaxHp>2000</MaxHp>

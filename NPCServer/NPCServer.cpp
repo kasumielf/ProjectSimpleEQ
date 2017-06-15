@@ -39,17 +39,8 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 		mbstowcs_s(&cs, name, 12, elem->Attribute("value"), 12);
 		npc->SetName(name);
 
-		if (x > 0 && y > 0)
-		{
-			npc->SetX(x);
-			npc->SetY(y);
-		}
-		else
-		{
-			tinyxml2::XMLElement *elem = node->FirstChildElement("Position");
-			npc->SetX(atoi(elem->Attribute("x")));
-			npc->SetY(atoi(elem->Attribute("y")));
-		}
+		npc->SetX(x);
+		npc->SetY(y);
 
 		elem = node->FirstChildElement("Level");
 		elem->QueryUnsignedText(&level);
@@ -68,8 +59,12 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 
 		if (scriptelem != nullptr)
 		{
-			npc->InitLuaScript(elem->Attribute("src"));
+			const char* filename = scriptelem->Attribute("src");
+			npc->InitLuaScript(filename);
 			lua_State *l = npc->GetLuaState();
+
+			lua_register(l, "SYSTEM_Send_Message", SYSTEM_Send_Message);
+			lua_register(l, "SYSTEM_Set_RespawnPosition", SYSTEM_Set_RespawnPosition);
 		}
 
 		npc->SetLevel(level);
@@ -346,8 +341,12 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 		res.RESPONSE_ID = req->sender_id;
 		res.npc_id = np->GetId();
 
+		char* msg;
+
+		wcstombs(msg, req->message, MAX_CHAT_MESSAGE_LENGTH);
+
 		if (np->GetLuaState() != nullptr)
-			np->DoLuaConversation(this, p->GetId(), req->message);
+			np->DoLuaConversation((void*)this, p->GetId(), msg);
 
 		Send(id, reinterpret_cast<unsigned char*>(&res));
 	}
@@ -358,18 +357,24 @@ bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
 	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1 * 1;
 }
 
-void SYSTEM_Set_RespawnPosition(lua_State * l)
+int SYSTEM_Set_RespawnPosition(lua_State * l)
 {
 	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -2));
 	int player_id = (int)lua_tonumber(l, -1);
+
+	std::cout << "bind" << std::endl;
+
+	return 0;
 }
 
-void SYSTEM_Send_Message(lua_State * l)
+int SYSTEM_Send_Message(lua_State * l)
 {
 	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -3));
 	int player_id = (int)lua_tonumber(l, -2);
 	const char* answer = lua_tostring(l, -3);
 	lua_pop(l, 8);
 
-	std::cout << "anser : " << answer;
+	std::cout << "anser : " << std::endl;
+
+	return 0;
 }
