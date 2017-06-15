@@ -6,13 +6,14 @@
 #include <vector>
 #include <chrono>
 #include <queue>
+#include <mutex>
 
 class TimerEventManager
 {
 private:
 	//std::deque<TimeEvent> m_timerEventQueue;
 	std::priority_queue<TimeEvent, std::vector<TimeEvent>, std::greater<TimeEvent> >m_timerEventQueue;
-
+	std::mutex timer_lock;
 public:
 	TimerEventManager();
 	~TimerEventManager();

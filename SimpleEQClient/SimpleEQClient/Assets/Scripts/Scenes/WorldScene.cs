@@ -7,6 +7,7 @@ using Scripts.Utility;
 using System;
 using System.Text;
 using Objects;
+using UnityEngine.EventSystems;
 
 public class WorldScene : MonoBehaviour {
     public Text myX;
@@ -22,6 +23,7 @@ public class WorldScene : MonoBehaviour {
     public BaseEnemy baseEnemyPrefab;
 
     public Text damageLog;
+    public Text chatLog;
 
     private Player myPlayer;
     private Dictionary<uint, Player> players;
@@ -30,6 +32,7 @@ public class WorldScene : MonoBehaviour {
     private Dictionary<uint, GameObject> playerObject;
     public GameObject myPlayerObject;
 
+    public InputField chatMessage;
 
     MOVE movePacket = new MOVE();
 
@@ -96,7 +99,7 @@ public class WorldScene : MonoBehaviour {
                     uint attacking_damage = (ushort)msg.GetParam(1);
 
                     if (attacking_id == 0)
-                        InputTextLine("공격 가능 범위에 아무도 없습니다!");
+                        InputBattleTextLine("공격 가능 범위에 아무도 없습니다!");
                     break;
                 }
             case MessageType.CREATE_NPC:
@@ -119,7 +122,7 @@ public class WorldScene : MonoBehaviour {
                     uint npc_id = (uint)msg.GetParam(0);
                     uint damage = (ushort)msg.GetParam(1);
 
-                    InputTextLine(String.Format("{0}에게 공격을 받아 {1} 대미지를 입었습니다!", mobs[npc_id].baseObject.name, damage));
+                    InputBattleTextLine(String.Format("{0}에게 공격을 받아 {1} 대미지를 입었습니다!", mobs[npc_id].baseObject.name, damage));
 
                     myPlayer.curr_hp -= damage;
                     break;
@@ -142,7 +145,7 @@ public class WorldScene : MonoBehaviour {
                     uint id = Convert.ToUInt32(msg.GetParam(0));
                     ushort hp = Convert.ToUInt16(msg.GetParam(1));
                     ushort dmg = Convert.ToUInt16(msg.GetParam(2));
-                    InputTextLine(String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}", mobs[id].baseObject.name, dmg, hp));
+                    InputBattleTextLine(String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}", mobs[id].baseObject.name, dmg, hp));
                     break;
                 }
 
@@ -150,7 +153,7 @@ public class WorldScene : MonoBehaviour {
                 {
                     ushort hp = Convert.ToUInt16(msg.GetParam(0));
                     myPlayer.curr_hp = hp;
-                    InputTextLine(String.Format("체력을 회복해 {0} HP가 되었습니다.", hp));
+                    InputBattleTextLine(String.Format("체력을 회복해 {0} HP가 되었습니다.", hp));
                     break;
                 }
             case MessageType.UPDATE_USER_BASEINFO:
@@ -163,20 +166,28 @@ public class WorldScene : MonoBehaviour {
 
                     if(myPlayer.level != level)
                     {
-                        InputTextLine(String.Format("{0} 레벨에서 {1} 레벨이 되었습니다.", myPlayer.level, level));
+                        InputBattleTextLine(String.Format("{0} 레벨에서 {1} 레벨이 되었습니다.", myPlayer.level, level));
                         myPlayer.level = level;
                     }
 
                     if(myPlayer.exp != exp)
                     {
-                        InputTextLine(String.Format("경험치 {0}을 획득했습니다.", exp - myPlayer.exp));
+                        InputBattleTextLine(String.Format("경험치 {0}을 획득했습니다.", exp - myPlayer.exp));
                         myPlayer.exp = exp;
                     }
 
                     myPlayer.curr_hp = hp;
-                    myPlayer.max_hp = hp;
+                    myPlayer.max_hp = maxhp;
                     myPlayer.base_damage = basedamage;
 
+                    break;
+                }
+            case MessageType.CHATTING:
+                {
+                    string sender = msg.GetParam(0).ToString();
+                    string message = msg.GetParam(1).ToString();
+
+                    InputChatTextLine(sender + " : " + message);
                     break;
                 }
 
@@ -185,7 +196,7 @@ public class WorldScene : MonoBehaviour {
 
     int line_count = 0;
 
-    private void InputTextLine(String text)
+    private void InputBattleTextLine(String text)
     {
         damageLog.text += (text + System.Environment.NewLine);
         if (line_count++ > 5)
@@ -193,6 +204,17 @@ public class WorldScene : MonoBehaviour {
             int index = damageLog.text.IndexOf(System.Environment.NewLine);
             string newtxt = damageLog.text.Substring(index + System.Environment.NewLine.Length);
             damageLog.text = newtxt;
+        }
+    }
+
+    private void InputChatTextLine(String text)
+    {
+        chatLog.text += (text + System.Environment.NewLine);
+        if (line_count++ > 5)
+        {
+            int index = chatLog.text.IndexOf(System.Environment.NewLine);
+            string newtxt = chatLog.text.Substring(index + System.Environment.NewLine.Length);
+            chatLog.text = newtxt;
         }
     }
 
@@ -213,61 +235,73 @@ public class WorldScene : MonoBehaviour {
 
         yield return 0;
     }
-	
-	// Update is called once per frame
-	void Update () {
 
+    public void SendChat()
+    {
+        CHAT packet = new CHAT();
+
+        packet.CHAT_STR = chatMessage.text;
+
+        nm.Send(Utility.ToByteArray(packet));
+        chatMessage.text = "";
+    }
+
+    // Update is called once per frame
+    void Update() {
         UpdateMyPlayerUI();
 
-        if(Input.GetKeyDown(KeyCode.W))
+        if (chatMessage.isFocused == false)
         {
-            myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, 1.0f);
-            movePacket.DIR = 2;
-            nm.Send(Utility.ToByteArray(movePacket));
-        }
-        else if (Input.GetKeyDown(KeyCode.D))
-        {
-            myPlayerObject.transform.position += new Vector3(1.0f, 0.0f, 0.0f);
-            movePacket.DIR = 4;
-            nm.Send(Utility.ToByteArray(movePacket));
-        }
-        else if (Input.GetKeyDown(KeyCode.S))
-        {
-            myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -1.0f);
-            movePacket.DIR = 6;
-            nm.Send(Utility.ToByteArray(movePacket));
-        }
-        else if (Input.GetKeyDown(KeyCode.A))
-        {
-            myPlayerObject.transform.position += new Vector3(-1.0f, 0.0f, 0.0f);
-            movePacket.DIR = 8;
-            nm.Send(Utility.ToByteArray(movePacket));
-        }
-        else if(Input.GetKeyDown(KeyCode.Q))
-        {
-            myPlayerObject.transform.Rotate(Vector3.up, -90);
-        }
-        else if(Input.GetKeyDown(KeyCode.E))
-        {
-            myPlayerObject.transform.Rotate(Vector3.up, 90);
-        }
-        else if(Input.GetKeyDown(KeyCode.F))
-        {
-            if (myPlayer.state == ObjectState.Idle)
+            if (Input.GetKeyDown(KeyCode.W))
             {
-                myPlayer.state = ObjectState.Battle;
+                myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, 1.0f);
+                movePacket.DIR = 2;
+                nm.Send(Utility.ToByteArray(movePacket));
+            }
+            else if (Input.GetKeyDown(KeyCode.D))
+            {
+                myPlayerObject.transform.position += new Vector3(1.0f, 0.0f, 0.0f);
+                movePacket.DIR = 4;
+                nm.Send(Utility.ToByteArray(movePacket));
+            }
+            else if (Input.GetKeyDown(KeyCode.S))
+            {
+                myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -1.0f);
+                movePacket.DIR = 6;
+                nm.Send(Utility.ToByteArray(movePacket));
+            }
+            else if (Input.GetKeyDown(KeyCode.A))
+            {
+                myPlayerObject.transform.position += new Vector3(-1.0f, 0.0f, 0.0f);
+                movePacket.DIR = 8;
+                nm.Send(Utility.ToByteArray(movePacket));
+            }
+            else if (Input.GetKeyDown(KeyCode.Q))
+            {
+                myPlayerObject.transform.Rotate(Vector3.up, -90);
+            }
+            else if (Input.GetKeyDown(KeyCode.E))
+            {
+                myPlayerObject.transform.Rotate(Vector3.up, 90);
+            }
+            else if (Input.GetKeyDown(KeyCode.F))
+            {
+                if (myPlayer.state == ObjectState.Idle)
+                {
+                    myPlayer.state = ObjectState.Battle;
+                }
+                else
+                {
+                    myPlayer.state = ObjectState.Idle;
+                }
+
+                ATTACK packet = new ATTACK();
+                nm.Send(Utility.ToByteArray(packet));
             }
             else
             {
-                myPlayer.state = ObjectState.Idle;
+
             }
-
-            ATTACK packet = new ATTACK();
-            nm.Send(Utility.ToByteArray(packet));
-        }
-        else
-        {
-
         }
     }
 
@@ -410,7 +444,16 @@ public class WorldScene : MonoBehaviour {
                     msg.Push(res.max_hp);
                     msg.Push(res.base_damage);
                     MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
 
+            case ServerPacket.PacketId.ID_Notify_ChatMessage:
+                {
+                    ServerPacket.Notify_ChatMessage res = (ServerPacket.Notify_ChatMessage)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_ChatMessage));
+                    Message msg = new Message(MessageType.CHATTING);
+                    msg.Push(res.sender_name);
+                    msg.Push(res.message);
+                    MessageQueue.getInstance.Enqueue(msg);
                     break;
                 }
         }

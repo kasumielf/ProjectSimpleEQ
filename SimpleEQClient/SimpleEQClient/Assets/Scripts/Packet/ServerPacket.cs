@@ -8,22 +8,23 @@ namespace ServerPacket
 {
     public enum PacketId : byte
     {
-            ID_LOGIN_OK = 10,
-            ID_LOGIN_FAIL = 11,
-            ID_POSITION_INFO = 12,
-            ID_NOTIFY_CHAT = 13,
-            ID_STAT_CHANGE = 14,
-            ID_REMOVE_OBJECT = 15,
-            ID_ADD_OBJECT = 16,
-            ID_CONNECT_SERVER = 17,
-            ID_Notify_Player_Enter = 18,
-            ID_Notify_Player_Move = 19,
-            ID_Notify_Player_Attack_NPC = 71,
-            ID_Notify_NPC_Attack_Player = 72,
-            ID_Notify_NPC_Damaged = 73,
-            ID_Notify_Player_Die = 20,
-            ID_Notify_Player_Info = 21,
-            ID_Notify_Player_HPRegen = 22
+        ID_LOGIN_OK = 10,
+        ID_LOGIN_FAIL = 11,
+        ID_POSITION_INFO = 12,
+        ID_NOTIFY_CHAT = 13,
+        ID_STAT_CHANGE = 14,
+        ID_REMOVE_OBJECT = 15,
+        ID_ADD_OBJECT = 16,
+        ID_CONNECT_SERVER = 17,
+        ID_Notify_Player_Enter = 18,
+        ID_Notify_Player_Move = 19,
+        ID_Notify_Player_Attack_NPC = 71,
+        ID_Notify_NPC_Attack_Player = 72,
+        ID_Notify_NPC_Damaged = 73,
+        ID_Notify_Player_Die = 20,
+        ID_Notify_Player_Info = 21,
+        ID_Notify_Player_HPRegen = 22,
+        ID_Notify_ChatMessage = 23
     }
 
     [Serializable]
@@ -253,7 +254,7 @@ namespace ServerPacket
 
         public ushort HP;
         public ushort LEVEL;
-        public ulong EXP;
+        public uint EXP;
         public ushort max_hp;
         public ushort base_damage;
     };
@@ -269,6 +270,23 @@ namespace ServerPacket
         }
 
         public ushort curr_hp;
+    };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
+    class Notify_ChatMessage : BasePacket
+    {
+        Notify_ChatMessage()
+        {
+            PACKET_ID = PacketId.ID_Notify_ChatMessage;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_ChatMessage));
+        }
+
+        public uint sender_id;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
+        public string sender_name;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
+        public string message;
     };
 }
 

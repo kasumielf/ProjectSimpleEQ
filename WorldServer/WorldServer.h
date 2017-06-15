@@ -4,8 +4,13 @@
 #include "World.h"
 #include "Status.h"
 
-#include <vector>
+#include "../Common/ClientPacket.h"
+#include "../Common/ServerPacket.h"
+#include "../Common/InnerRequestPacket.h"
+#include "../Common/InnerResponsePacket.h"
+#include "../Common/InnerNotifyPacket.h"
 
+#include <vector>
 
 class WorldServer :
 	public BaseServer
@@ -45,7 +50,7 @@ public:
 	void NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromPlayer * not);
 	void NPCDamaged(const int id, Notify_NPC_To_World_NPCDamaged * not);
 	void NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPlayer * not);
-	void SendChatMessage(const int id, Request_Send_MyChat* req);
-	void NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage* res);
+	void SendChatMessage(const int id, CHAT * req);
+	void NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage * res);
 };
 

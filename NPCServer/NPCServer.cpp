@@ -1,12 +1,10 @@
 #include "NPCServer.h"
 #include <iostream>
-#include "../Common/InnerRequestPacket.h"
-#include "../Common/InnerResponsePacket.h"
-#include "../Common/InnerNotifyPacket.h"
 
 NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity, port), last_add_npc_id(NPC_START_ID)
 {
 	AttachIOCPEvent(IOCPOpType::OpNPCAttack, std::bind(&NPCServer::NPCAttackUpdate, this, std::placeholders::_1, this));
+	AttachIOCPEvent(IOCPOpType::OpNPCRegen, std::bind(&NPCServer::NPCRegen, this, std::placeholders::_1, this));
 }
 
 NPCServer::~NPCServer()
@@ -115,7 +113,7 @@ void NPCServer::ClearNPCs()
 	}
 
 	npcs.clear();
-	regenQueue.clear();
+	regen_npcs.clear();
 }
 
 void NPCServer::ClearPlayers()
@@ -181,6 +179,20 @@ void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
 			self->PushTimerEvent(1000, attack_event);
 		}
 	}
+}
+
+void NPCServer::NPCRegen(unsigned int id, NPCServer * self)
+{
+	NonPlayer* npc = self->regen_npcs[id];
+
+	if (npc == nullptr)
+		return;
+
+	self->Lock();
+	self->CreateNPC(npc);
+	self->npcs[id] = npc;
+	self->regen_npcs.erase(id);
+	self->Unlock();
 }
 
 void NPCServer::ProcessPacket(const int id, unsigned char * packet)
@@ -273,7 +285,7 @@ void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNP
 
 		}
 
-		unsigned int hp = npc->GetHP();
+		int hp = npc->GetHP();
 
 		if (hp - not->damage <= 0)
 		{
@@ -282,8 +294,15 @@ void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNP
 			die_notify.gained_exp = npc->GetExp();
 			die_notify.remover_id = not->attacker_id;
 
-			delete npcs.at(not->npc_id);
-			npcs.erase(not->npc_id);
+			//delete npcs.at(not->npc_id);
+			regen_npcs[npc->GetId()] = npc;
+			npcs.erase(npc->GetId());
+
+			Event regen_event;
+			regen_event.provider = npc->GetId();
+			regen_event.event_type = IOCPOpType::OpNPCRegen;
+
+			PushTimerEvent(npc->GetRespawnTime(), regen_event);
 
 			Send(id, reinterpret_cast<unsigned char*>(&die_notify));
 		}
@@ -340,3 +359,4 @@ bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
 {
 	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1 * 1;
 }
+

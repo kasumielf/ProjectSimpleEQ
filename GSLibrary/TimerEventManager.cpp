@@ -15,8 +15,9 @@ void TimerEventManager::Push(const double duration, const Event event)
 
 	ev.time = event_time;
 	ev.event = event;
-
+	timer_lock.lock();
 	m_timerEventQueue.push(ev);
+	timer_lock.unlock();
 }
 
 const TimeEvent& TimerEventManager::Top()
@@ -26,5 +27,7 @@ const TimeEvent& TimerEventManager::Top()
 
 void TimerEventManager::Pop()
 {
+	timer_lock.lock();
 	m_timerEventQueue.pop();
+	timer_lock.unlock();
 }

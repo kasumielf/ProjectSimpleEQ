@@ -5,6 +5,10 @@
 #include "../GSLibrary/BaseServer.h"
 #include "NonPlayer.h"
 
+#include "../Common/InnerRequestPacket.h"
+#include "../Common/InnerResponsePacket.h"
+#include "../Common/InnerNotifyPacket.h"
+
 #include "tinyxml2/tinyxml2.h"
 class NPCServer : public BaseServer
 {
@@ -12,8 +16,8 @@ private:
 	int last_add_npc_id;
 
 	std::unordered_map<unsigned int, NonPlayer*> npcs;
+	std::unordered_map<unsigned int, NonPlayer*> regen_npcs;
 	std::unordered_map<unsigned int, Object*> players;
-	std::deque<NonPlayer*> regenQueue;
 
 	void CreateNPCFromResource(const char* xmlfilename, unsigned short x, unsigned short y);
 
@@ -27,6 +31,7 @@ public:
 	void InitTemporaryNPCs();
 
 	void NPCAttackUpdate(unsigned int id, NPCServer* self);
+	void NPCRegen(unsigned int id, NPCServer* self);
 
 	virtual void ProcessPacket(const int id, unsigned char* packet);
 	virtual void Logging(const wchar_t* msg, ...);

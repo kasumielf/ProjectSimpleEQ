@@ -6,10 +6,9 @@
 const unsigned char ID_Response_DB_To_Auth_UserExist = 50;
 const unsigned char ID_Response_DB_To_World_GetUserStatus = 51;
 const unsigned char ID_Response_DB_To_World_UpdateUserStatus = 52;
-const unsigned char ID_Response_NPC_To_World_NPCMessage = 53;
-
 // for world
 const unsigned char ID_Response_World_To_Auth_AllocateUser = 53;
+const unsigned char ID_Response_NPC_To_World_NPCMessage = 54;
 
 #pragma pack(push, 1)
 struct Response_DB_To_Auth_IsUserExist : InnerBasePacket

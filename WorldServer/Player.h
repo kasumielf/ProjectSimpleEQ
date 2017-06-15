@@ -11,14 +11,14 @@ class Player : public Object
 {
 	unsigned int socket_id;
 
-	unsigned int level;
+	unsigned short level;
 	unsigned long exp;
 	unsigned long require_exp;
 
-	unsigned int curr_hp;
-	unsigned int max_hp;
+	unsigned short curr_hp;
+	unsigned short max_hp;
 
-	unsigned int base_damage;
+	unsigned short base_damage;
 
 	unsigned short start_x;
 	unsigned short start_y;
@@ -32,11 +32,11 @@ public:
 	~Player();
 
 	void SetSocketId(unsigned int  _sockid) { socket_id = _sockid; }
-	void SetLevel(unsigned int _level) { level = _level; }
+	void SetLevel(unsigned short _level) { level = _level; }
 	void SetExp(unsigned long _exp) { exp = _exp; }
-	void SetHP(unsigned int _hp) { curr_hp = _hp; }
-	void SetMaxHp(unsigned int _hp) { max_hp = _hp; }
-	void SetBaseDamage(unsigned int _dmg) { base_damage = _dmg; }
+	void SetHP(unsigned short _hp) { curr_hp = _hp; }
+	void SetMaxHp(unsigned short _hp) { max_hp = _hp; }
+	void SetBaseDamage(unsigned short _dmg) { base_damage = _dmg; }
 	void SetRequiredExp(unsigned long _exp) { require_exp = _exp; }
 	void SetStartX(unsigned long _x) { start_x = _x; }
 	void SetStartY(unsigned long _y) { start_y = _y; }
@@ -44,12 +44,12 @@ public:
 	void GainExp(unsigned long _exp);
 
 	const unsigned int GetSocketId() { return socket_id; }
-	const unsigned int GetLevel() { return level; }
-	const unsigned int GetExp() { return exp; }
-	const unsigned int GetHP() { return curr_hp; }
-	const unsigned int GetMaxHp() { return max_hp; }
-	const unsigned int GetBaseDamage() { return base_damage; }
-	void IncreaseHP(unsigned int hp);
+	const unsigned short GetLevel() { return level; }
+	const unsigned long GetExp() { return exp; }
+	const unsigned short GetHP() { return curr_hp; }
+	const unsigned short GetMaxHp() { return max_hp; }
+	const unsigned short GetBaseDamage() { return base_damage; }
+	void IncreaseHP(unsigned short hp);
 	const unsigned short GetStartX() { return start_x; }
 	const unsigned short GetStartY() { return start_y; }
 

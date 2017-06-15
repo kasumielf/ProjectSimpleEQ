@@ -75,14 +75,4 @@ struct Request_Enter_GameWorld : BasePacket
 	unsigned int user_uid;
 };
 
-struct Request_Send_MyChat : BasePacket
-{
-	Request_Send_MyChat()
-	{
-		PACKET_ID = ID_Request_Send_MyChat;
-		SIZE = sizeof(Request_Send_MyChat);
-	}
-
-	wchar_t message[MAX_CHAT_MESSAGE_LENGTH];
-};
 #pragma pack(pop)

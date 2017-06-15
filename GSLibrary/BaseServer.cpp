@@ -495,8 +495,6 @@ void BaseServer::ErrorDisplay(char *msg, int err_no)
 
 void BaseServer::PushTimerEvent(double duration, Event evt)
 {
-//	Lock();
 	m_timerEvents.Push(duration, evt);
-//	Unlock();
 }
 

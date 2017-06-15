@@ -16,7 +16,6 @@ const unsigned char ID_Notify_World_To_NPC_PlayerAttackNPC = 108;
 const unsigned char ID_Notify_World_To_NPC_PlayerMove = 109;
 const unsigned char ID_Notify_World_To_NPC_NPCStopAttackPlayer = 110;
 
-
 #pragma pack(push, 1)
 
 struct Notify_NPC_To_World_NPCreatedAdd_NPC : InnerBasePacket

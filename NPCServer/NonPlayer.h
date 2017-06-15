@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object.h"
+#include <chrono>
 
 class NonPlayer : public Object
 {
@@ -20,6 +21,8 @@ private:
 //	lua_State *ls;
 
 	unsigned char attack_count;
+	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> next_regen_time;
+
 
 public:
 	NonPlayer(unsigned int _id, double _rtime) : Object(_id, ObjectType::NonPlayer), respawn_time(_rtime) {}
@@ -46,6 +49,8 @@ public:
 	const unsigned int GetAttackTarget() { return attack_target; }
 
 //	const lua_State* GetLuaState() { return ls; }
+	void SetRegenTime();
+	auto GetRegenTime() { return next_regen_time; }
 	virtual void Update();
 };
 

@@ -9,7 +9,7 @@ void Player::GainExp(unsigned long _exp)
 	exp += _exp;
 }
 
-void Player::IncreaseHP(unsigned int hp)
+void Player::IncreaseHP(unsigned short hp)
 {
 	if (curr_hp + hp > max_hp)
 		curr_hp = max_hp;

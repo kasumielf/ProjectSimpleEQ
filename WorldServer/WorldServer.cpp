@@ -1,11 +1,6 @@
 #include <iostream>
 
 #include "WorldServer.h"
-#include "../Common/ClientPacket.h"
-#include "../Common/ServerPacket.h"
-#include "../Common/InnerRequestPacket.h"
-#include "../Common/InnerResponsePacket.h"
-#include "../Common/InnerNotifyPacket.h"
 #include "tinyxml2/tinyxml2.h"
 
 WorldServer::WorldServer(const int capacity, const short port) : BaseServer(capacity, port)
@@ -49,7 +44,6 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 				GetUserState(id, reinterpret_cast<Response_DB_To_World_GetUserStatus*>(packet));
 				break;
 			}
-
 			case ID_Request_Enter_GameWorld:
 			{
 				EnterGameWorld(id, reinterpret_cast<Request_Enter_GameWorld*>(packet));
@@ -63,6 +57,11 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 			case ID_ATTACK:
 			{
 				Attack(id, nullptr);
+				break;
+			}
+			case ID_CHAT:
+			{
+				SendChatMessage(id, reinterpret_cast<CHAT*>(packet));
 				break;
 			}
 			case ID_LOGOUT:
@@ -92,6 +91,11 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 			case ID_Notify_NPC_To_World_NPCAttackPlayer:
 			{
 				NPCAttackPlayer(id, reinterpret_cast<Notify_NPC_To_World_NPCAttackPlayer*>(packet));
+				break;
+			}
+			case ID_Response_NPC_To_World_NPCMessage:
+			{
+				NotifyNPCMesage(id, reinterpret_cast<Response_NPC_To_World_NPCMessage*>(packet));
 				break;
 			}
 		}
@@ -665,6 +669,23 @@ void WorldServer::NPCCreated(const int id, Notify_NPC_To_World_NPCreatedAdd_NPC 
 	world->AddObject(npc, npc->GetX(), npc->GetY());
 	world->SetSector(npc, npc->GetX(), npc->GetY());
 
+	ADD_OBJECT addNotify;
+	addNotify.ID = npc->GetId();
+	addNotify.TYPE = (char)npc->GetType();
+	addNotify.x = npc->GetX();
+	addNotify.y = npc->GetY();
+	wcscpy_s(addNotify.name, npc->GetName());
+
+	auto iter_b = world->GetPlayerBegin(npc->getCurrSectorX(), npc->getCurrSectorY());
+	auto iter_e = world->GetPlayerEnd(npc->getCurrSectorX(), npc->getCurrSectorY());
+
+	unsigned char* pk = reinterpret_cast<unsigned char*>(&addNotify);
+
+	for (; iter_b != iter_e; ++iter_b)
+	{
+		if ((*iter_b).second->GetType() == ObjectType::Player)
+			Send(socketIds[(*iter_b).second->GetId()], pk);
+	}
 }
 
 void WorldServer::NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromPlayer * not)
@@ -690,6 +711,7 @@ void WorldServer::NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromP
 
 	Player *p = dynamic_cast<Player*>(world->GetObjectById(not->remover_id));
 	p->GainExp(not->gained_exp);
+	p->SetCurrentState(ObjectState::Idle);
 
 	if (p->GetExp() >= level_data[p->GetLevel()].required_exp)
 	{
@@ -806,7 +828,7 @@ void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPla
 	}
 }
 
-void WorldServer::SendChatMessage(const int id, Request_Send_MyChat * req)
+void WorldServer::SendChatMessage(const int id, CHAT * req)
 {
 	Player *p = players[id];
 
@@ -823,19 +845,21 @@ void WorldServer::SendChatMessage(const int id, Request_Send_MyChat * req)
 	Request_World_To_NPC_PlayerChat msg;
 
 	wcscpy_s(notMsg.sender_name, p->GetName());
-	wcscpy_s(notMsg.message, req->message);
+	wcscpy_s(notMsg.message, req->CHAT_STR);
 
 	msg.sender_id = p->GetId();
-	wcscpy_s(msg.message, req->message);
+	wcscpy_s(msg.message, req->CHAT_STR);
 
 	for (; iter_b != iter_e; ++iter_b)
 	{
-		if ((*iter_b).second->GetType == ObjectType::Player)
+		unsigned int obj_id = (*iter_b).second->GetId();
+
+		if ((*iter_b).second->GetType() == ObjectType::Player && obj_id != id)
 		{
 			notMsg.sender_id = p->GetId();
-			Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&notMsg));
+			Send(socketIds[obj_id], reinterpret_cast<unsigned char*>(&notMsg));
 		}
-		else if ((*iter_b).second->GetType == ObjectType::NonPlayer)
+		else if ((*iter_b).second->GetType() == ObjectType::NonPlayer)
 		{
 			msg.target_id = (*iter_b).second->GetId();
 			SendToInternal("NPC", reinterpret_cast<unsigned char*>(&msg));
@@ -849,7 +873,7 @@ void WorldServer::SendChatMessage(const int id, Request_Send_MyChat * req)
 
 void WorldServer::NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage * res)
 {
-	Player *p = players[res->RESPONSE_ID];
+	Player *p = dynamic_cast<Player*>(world->GetObjectById(res->RESPONSE_ID));
 
 	short sec_x = p->getCurrSectorX();
 	short sec_y = p->getCurrSectorY();
@@ -864,7 +888,7 @@ void WorldServer::NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage
 
 	for (; iter_b != iter_e; ++iter_b)
 	{
-		if ((*iter_b).second->GetType == ObjectType::Player)
+		if ((*iter_b).second->GetType() == ObjectType::Player)
 		{
 			notMsg.sender_id = p->GetId();
 			Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&notMsg));

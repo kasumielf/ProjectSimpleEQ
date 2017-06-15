@@ -10,4 +10,5 @@ enum class IOCPOpType
 	OpPlayerDBSave,
 	OpNPCAttack,
 	OpNPCUpdate,
+	OpNPCRegen,
 };
