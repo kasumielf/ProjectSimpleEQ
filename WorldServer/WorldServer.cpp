@@ -719,7 +719,7 @@ void WorldServer::NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromP
 void WorldServer::NPCDamaged(const int id, Notify_NPC_To_World_NPCDamaged * not)
 {
 	Notify_NPC_Damaged damagedPacket;
-	damagedPacket.npc_hp = not->npc_hp;
+	damagedPacket.npc_hp = not->npc_hp - not->gained_damage;
 	damagedPacket.npc_id = not->npc_id;
 	damagedPacket.gained_damage = not->gained_damage;
 
@@ -735,8 +735,6 @@ void WorldServer::NPCDamaged(const int id, Notify_NPC_To_World_NPCDamaged * not)
 		if ((*iter_b).second->GetType() == ObjectType::Player)
 			Send(socketIds[(*iter_b).second->GetId()], pk);
 	}
-
-
 }
 
 void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPlayer * not)

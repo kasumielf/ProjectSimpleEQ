@@ -8,5 +8,5 @@
 	<BaseDamage>80</BaseDamage>
 	<FactionGroup>2</FactionGroup>
 	<RespawnTime>300000</RespawnTime>
-	<DescriptScript>Monster/Faction2/Descript/Guard.lua</DescriptScript>
+	<DescriptScript src="Monster/Faction2/Descript/Guard.lua"></DescriptScript>
 </Monster>

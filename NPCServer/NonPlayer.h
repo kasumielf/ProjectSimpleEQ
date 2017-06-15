@@ -1,6 +1,12 @@
 #pragma once
 
 #include "Object.h"
+extern "C"
+{
+#include <lua.h>
+#include <lualib.h>
+}
+#include <lua.hpp>
 
 class NonPlayer : public Object
 {
@@ -17,7 +23,7 @@ private:
 	double respawn_time;
 
 	unsigned int attack_target;
-//	lua_State *ls;
+	lua_State *l;
 
 	unsigned char attack_count;
 
@@ -45,7 +51,9 @@ public:
 	const double GetRespawnTime() { return respawn_time; }
 	const unsigned int GetAttackTarget() { return attack_target; }
 
-//	const lua_State* GetLuaState() { return ls; }
+	lua_State* GetLuaState() { return l; }
+	void InitLuaScript(const char* filename);
+	void DoLuaConversation(void* server_ptr, unsigned int player, char* msg);
 	virtual void Update();
 };
 

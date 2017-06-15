@@ -66,6 +66,14 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 		elem = node->FirstChildElement("RespawnTime");
 		elem->QueryDoubleText(&respawn_time);
 
+		tinyxml2::XMLElement *scriptelem = node->FirstChildElement("DescriptScript");
+
+		if (scriptelem != nullptr)
+		{
+			npc->InitLuaScript(elem->Attribute("src"));
+			lua_State *l = npc->GetLuaState();
+		}
+
 		npc->SetLevel(level);
 		npc->SetExp(exp);
 		npc->SetMaxHp(max_hp);
@@ -131,17 +139,6 @@ void NPCServer::ClearPlayers()
 	players.clear();
 }
 
-void NPCServer::InitTemporaryNPCs()
-{
-	//lua_State *l = luaL_newstate();
-	//luabind::open(l);
-//	luabind::module(l)
-//	[
-//		luabind::def("CreateNPC", &NPCServer::CreateNPC)
-//	];
-
-	CreateNPCFromResource("Monsters/Captain001.xml", 0, 0);
-}
 
 void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
 {
@@ -242,7 +239,6 @@ void NPCServer::PlayerEntered(const int id, Notify_World_To_NPC_PlayerEntered * 
 	player->SetY(not->y);
 
 	players.insert(std::make_pair(player->GetId(), player));
-
 }
 
 void NPCServer::PlayerExit(const int id, Notify_World_To_NPC_PlayerExit * not)
@@ -330,7 +326,9 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 		Response_NPC_To_World_NPCMessage res;
 		res.RESPONSE_ID = req->sender_id;
 		res.npc_id = np->GetId();
-		wcscpy_s(res.message, L"안녕하세요! 좋은 아침입니다!");
+
+		if (np->GetLuaState() != nullptr)
+			np->DoLuaConversation(this, p->GetId(), req->message);
 
 		Send(id, reinterpret_cast<unsigned char*>(&res));
 	}
@@ -339,4 +337,20 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
 {
 	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1 * 1;
+}
+
+void SYSTEM_Set_RespawnPosition(lua_State * l)
+{
+	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -2));
+	int player_id = (int)lua_tonumber(l, -1);
+}
+
+void SYSTEM_Send_Message(lua_State * l)
+{
+	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -3));
+	int player_id = (int)lua_tonumber(l, -2);
+	const char* answer = lua_tostring(l, -3);
+	lua_pop(l, 8);
+
+	std::cout << "anser : " << answer;
 }

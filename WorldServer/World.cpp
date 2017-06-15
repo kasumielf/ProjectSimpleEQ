@@ -26,6 +26,17 @@ Object * const World::GetObjectById(unsigned int id)
 	return nullptr;
 }
 
+void World::WorldInit()
+{
+	for (int y = 0; y < MAX_WORLD_HEIGHT; ++y)
+	{
+		for (int x = 0; x < MAX_WORLD_WIDTH; ++x)
+		{
+
+		}
+	}
+}
+
 void World::CreateObject(Object * obj)
 {
 	
