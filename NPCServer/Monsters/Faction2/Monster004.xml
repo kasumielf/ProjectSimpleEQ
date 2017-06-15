@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Monster>
+	<Name value="순찰병 1"/>
+	<Level>5</Level>
+	<Exp>500</Exp>
+	<MaxHp>400</MaxHp>
+	<BaseDamage>60</BaseDamage>
+	<FactionGroup>2</FactionGroup>
+	<RespawnTime>60000</RespawnTime>
+</Monster>
