@@ -169,9 +169,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\lua51.redist.5.1.5\build\native\lua51.redist.targets" Condition="Exists('..\packages\lua51.redist.5.1.5\build\native\lua51.redist.targets')" />
-    <Import Project="..\packages\lua51.5.1.5\build\native\lua51.targets" Condition="Exists('..\packages\lua51.5.1.5\build\native\lua51.targets')" />
-    <Import Project="..\packages\luabind.0.7.1\build\native\luabind.targets" Condition="Exists('..\packages\luabind.0.7.1\build\native\luabind.targets')" />
     <Import Project="..\packages\boost.1.64.0.0\build\native\boost.targets" Condition="Exists('..\packages\boost.1.64.0.0\build\native\boost.targets')" />
     <Import Project="..\packages\boost_atomic-vc110.1.64.0.0\build\native\boost_atomic-vc110.targets" Condition="Exists('..\packages\boost_atomic-vc110.1.64.0.0\build\native\boost_atomic-vc110.targets')" />
     <Import Project="..\packages\boost_bzip2-vc110.1.64.0.0\build\native\boost_bzip2-vc110.targets" Condition="Exists('..\packages\boost_bzip2-vc110.1.64.0.0\build\native\boost_bzip2-vc110.targets')" />
@@ -211,14 +208,13 @@
     <Import Project="..\packages\boost_wserialization-vc110.1.64.0.0\build\native\boost_wserialization-vc110.targets" Condition="Exists('..\packages\boost_wserialization-vc110.1.64.0.0\build\native\boost_wserialization-vc110.targets')" />
     <Import Project="..\packages\boost_zlib-vc110.1.64.0.0\build\native\boost_zlib-vc110.targets" Condition="Exists('..\packages\boost_zlib-vc110.1.64.0.0\build\native\boost_zlib-vc110.targets')" />
     <Import Project="..\packages\boost-vc110.1.64.0.0\build\native\boost-vc110.targets" Condition="Exists('..\packages\boost-vc110.1.64.0.0\build\native\boost-vc110.targets')" />
+    <Import Project="..\packages\lua.redist.5.3.3\build\native\lua.redist.targets" Condition="Exists('..\packages\lua.redist.5.3.3\build\native\lua.redist.targets')" />
+    <Import Project="..\packages\lua.5.3.3\build\native\lua.targets" Condition="Exists('..\packages\lua.5.3.3\build\native\lua.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\lua51.redist.5.1.5\build\native\lua51.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\lua51.redist.5.1.5\build\native\lua51.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\lua51.5.1.5\build\native\lua51.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\lua51.5.1.5\build\native\lua51.targets'))" />
-    <Error Condition="!Exists('..\packages\luabind.0.7.1\build\native\luabind.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\luabind.0.7.1\build\native\luabind.targets'))" />
     <Error Condition="!Exists('..\packages\boost.1.64.0.0\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\boost.1.64.0.0\build\native\boost.targets'))" />
     <Error Condition="!Exists('..\packages\boost_atomic-vc110.1.64.0.0\build\native\boost_atomic-vc110.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\boost_atomic-vc110.1.64.0.0\build\native\boost_atomic-vc110.targets'))" />
     <Error Condition="!Exists('..\packages\boost_bzip2-vc110.1.64.0.0\build\native\boost_bzip2-vc110.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\boost_bzip2-vc110.1.64.0.0\build\native\boost_bzip2-vc110.targets'))" />
@@ -258,5 +254,7 @@
     <Error Condition="!Exists('..\packages\boost_wserialization-vc110.1.64.0.0\build\native\boost_wserialization-vc110.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\boost_wserialization-vc110.1.64.0.0\build\native\boost_wserialization-vc110.targets'))" />
     <Error Condition="!Exists('..\packages\boost_zlib-vc110.1.64.0.0\build\native\boost_zlib-vc110.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\boost_zlib-vc110.1.64.0.0\build\native\boost_zlib-vc110.targets'))" />
     <Error Condition="!Exists('..\packages\boost-vc110.1.64.0.0\build\native\boost-vc110.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\boost-vc110.1.64.0.0\build\native\boost-vc110.targets'))" />
+    <Error Condition="!Exists('..\packages\lua.redist.5.3.3\build\native\lua.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\lua.redist.5.3.3\build\native\lua.redist.targets'))" />
+    <Error Condition="!Exists('..\packages\lua.5.3.3\build\native\lua.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\lua.5.3.3\build\native\lua.targets'))" />
   </Target>
 </Project>

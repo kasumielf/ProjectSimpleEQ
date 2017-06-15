@@ -2,8 +2,17 @@
 
 #include <unordered_map>
 #include <deque>
+
 #include "../GSLibrary/BaseServer.h"
 #include "NonPlayer.h"
+#include "tinyxml2/tinyxml2.h"
+
+extern "C"
+{
+#include <lua.h>
+#include <lualib.h>
+}
+#include <lua.hpp>
 
 #include "../Common/InnerRequestPacket.h"
 #include "../Common/InnerResponsePacket.h"
@@ -19,8 +28,6 @@ private:
 	std::unordered_map<unsigned int, NonPlayer*> regen_npcs;
 	std::unordered_map<unsigned int, Object*> players;
 
-	void CreateNPCFromResource(const char* xmlfilename, unsigned short x, unsigned short y);
-
 public:
 	NPCServer(const int capacity, const short port);
 	~NPCServer();
@@ -28,8 +35,6 @@ public:
 	void CreateNPC(NonPlayer *npc);
 	void ClearNPCs();
 	void ClearPlayers();
-	void InitTemporaryNPCs();
-
 	void NPCAttackUpdate(unsigned int id, NPCServer* self);
 	void NPCRegen(unsigned int id, NPCServer* self);
 
@@ -43,7 +48,11 @@ public:
 	void PlayerMove(const int id, Notify_World_To_NPC_PlayerMove * not);
 	void NPCStopAttackPlayer(const int id, Notify_World_To_NPC_NPCStopAttackPlayer * not);
 	void PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat * req);
+	
+	void CreateNPCFromResource(const char* xmlfilename, unsigned short x, unsigned short y);
 
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
 };
 
+static void SYSTEM_Set_RespawnPosition(lua_State * l);
+static void SYSTEM_Send_Message(lua_State * l);

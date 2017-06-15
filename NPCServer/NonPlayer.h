@@ -1,6 +1,12 @@
 #pragma once
 
 #include "Object.h"
+extern "C"
+{
+#include <lua.h>
+#include <lualib.h>
+}
+#include <lua.hpp>
 #include <chrono>
 
 class NonPlayer : public Object
@@ -18,7 +24,7 @@ private:
 	double respawn_time;
 
 	unsigned int attack_target;
-//	lua_State *ls;
+	lua_State *l;
 
 	unsigned char attack_count;
 	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> next_regen_time;
@@ -48,6 +54,9 @@ public:
 	const double GetRespawnTime() { return respawn_time; }
 	const unsigned int GetAttackTarget() { return attack_target; }
 
+	lua_State* GetLuaState() { return l; }
+	void InitLuaScript(const char* filename);
+	void DoLuaConversation(void* server_ptr, unsigned int player, char* msg);
 //	const lua_State* GetLuaState() { return ls; }
 	void SetRegenTime();
 	auto GetRegenTime() { return next_regen_time; }

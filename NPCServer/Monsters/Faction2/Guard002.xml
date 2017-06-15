@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Monster>
+	<Name value="경비병"/>
+	<Position x="35" y="30"/>
+	<Level>10</Level>
+	<Exp>500</Exp>
+	<MaxHp>2000</MaxHp>
+	<BaseDamage>80</BaseDamage>
+	<FactionGroup>2</FactionGroup>
+	<RespawnTime>300000</RespawnTime>
+	<DescriptScript src="Monster/Faction2/Descript/Guard.lua"></DescriptScript>
+</Monster>
