@@ -11,4 +11,5 @@ enum class IOCPOpType
 	OpNPCAttack,
 	OpNPCUpdate,
 	OpNPCRegen,
+	OpNPCMove,
 };

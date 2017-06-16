@@ -37,6 +37,7 @@ public:
 	void ClearPlayers();
 	void NPCAttackUpdate(unsigned int id, NPCServer* self);
 	void NPCRegen(unsigned int id, NPCServer* self);
+	void NPCMove(unsigned int id, NPCServer* self);
 
 	virtual void ProcessPacket(const int id, unsigned char* packet);
 	virtual void Logging(const wchar_t* msg, ...);
@@ -50,6 +51,7 @@ public:
 	void PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat * req);
 	
 	void CreateNPCFromResource(const char* xmlfilename, unsigned short x, unsigned short y);
+	void NPCMoveProcess(NonPlayer* npc, Object* player);
 
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
 };

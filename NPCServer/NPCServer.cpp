@@ -5,6 +5,7 @@ NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity
 {
 	AttachIOCPEvent(IOCPOpType::OpNPCAttack, std::bind(&NPCServer::NPCAttackUpdate, this, std::placeholders::_1, this));
 	AttachIOCPEvent(IOCPOpType::OpNPCRegen, std::bind(&NPCServer::NPCRegen, this, std::placeholders::_1, this));
+	AttachIOCPEvent(IOCPOpType::OpNPCMove, std::bind(&NPCServer::NPCMove, this, std::placeholders::_1, this));
 }
 
 NPCServer::~NPCServer()
@@ -85,6 +86,20 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 	}
 }
 
+void NPCServer::NPCMoveProcess(NonPlayer * npc, Object * player)
+{
+	Notify_NPC_To_World_NPCMove not;
+
+	// Move Process
+
+
+	not.npc_id = npc->GetId();
+	not.x = npc->GetX();
+	not.y = npc->GetY();
+
+	SendToInternal("World", reinterpret_cast<unsigned char*>(&not));
+}
+
 void NPCServer::CreateNPC(NonPlayer * npc)
 {
 	Notify_NPC_To_World_NPCreatedAdd_NPC packet;
@@ -137,31 +152,34 @@ void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
 {
 	if (self->npcs[id] != nullptr)
 	{
-		NonPlayer *p = dynamic_cast<NonPlayer*>(self->npcs[id]);
+		NonPlayer *npc = dynamic_cast<NonPlayer*>(self->npcs[id]);
 
-		if (p == nullptr || p->GetCurrentState() != ObjectState::Battle)
+		if (npc == nullptr || npc->GetCurrentState() != ObjectState::Battle)
 			return;
 	
-		if (p->GetCurrentState() == ObjectState::Battle)
+		if (npc->GetCurrentState() == ObjectState::Battle)
 		{
-			unsigned short my_x = p->GetX();
-			unsigned short my_y = p->GetY();
+			unsigned short my_x = npc->GetX();
+			unsigned short my_y = npc->GetY();
 
-			unsigned short target_x = self->players[p->GetAttackTarget()]->GetX();
-			unsigned short target_y = self->players[p->GetAttackTarget()]->GetX();
+			unsigned short target_x = self->players[npc->GetAttackTarget()]->GetX();
+			unsigned short target_y = self->players[npc->GetAttackTarget()]->GetX();
 
 			if (self->IsClosed(my_x, my_y, target_x, target_y))
 			{
 				Notify_NPC_To_World_NPCAttackPlayer packet;
-				packet.npc_id = p->GetId();
-				packet.target_id = p->GetAttackTarget();
-				packet.damage = p->GetRealDamage();
+				packet.npc_id = npc->GetId();
+				packet.target_id = npc->GetAttackTarget();
+				packet.damage = npc->GetRealDamage();
 
 				SendToInternal("World", reinterpret_cast<unsigned char*>(&packet));
 			}
 			else
 			{
-				// ToDo : 플레이어 따라가기	
+				Event move_event;
+				move_event.provider = npc->GetId();
+				move_event.event_type = IOCPOpType::OpNPCMove;
+				self->PushTimerEvent(1000, move_event);
 			}
 
 			Event attack_event;
@@ -185,6 +203,15 @@ void NPCServer::NPCRegen(unsigned int id, NPCServer * self)
 	self->npcs[id] = npc;
 	self->regen_npcs.erase(id);
 	self->Unlock();
+}
+
+void NPCServer::NPCMove(unsigned int id, NPCServer * self)
+{
+	NonPlayer* npc = self->npcs[id];
+	if (npc == nullptr)
+		return;
+
+	self->NPCMoveProcess(npc, self->players[npc->GetAttackTarget]);
 }
 
 void NPCServer::ProcessPacket(const int id, unsigned char * packet)

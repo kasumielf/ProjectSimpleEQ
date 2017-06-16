@@ -38,7 +38,7 @@ public:
 	Status& GetLevelData(unsigned int level) { return level_data[level]; }
 
 	void InitStatusTable();
-	void MovePlayer(int id, Player* p);
+	void MoveObject(int id, Player* p);
 
 	void AllocateUser(const int id, Request_Auth_To_World_AllocateUser* req);
 	void GetUserState(const int id, Response_DB_To_World_GetUserStatus* res);
@@ -52,5 +52,6 @@ public:
 	void NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPlayer * not);
 	void SendChatMessage(const int id, CHAT * req);
 	void NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage * res);
+	void NPCMove(const int id, Notify_NPC_To_World_NPCMove * not);
 };
 

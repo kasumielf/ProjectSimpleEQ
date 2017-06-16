@@ -19,7 +19,7 @@ int CreateNPCFromLuaScript(lua_State* l)
 	lua_pop(l, 3);
 
 	server.CreateNPCFromResource(filename, x, y);
-	server.Logging(L"[NPC Create] filename : %wS, Position X : %d, Y : %d", filename, x, y);
+	server.Logging(L"[NPC Create] filename : %S, Position X : %d, Y : %d", filename, x, y);
 	return 0;
 }
 

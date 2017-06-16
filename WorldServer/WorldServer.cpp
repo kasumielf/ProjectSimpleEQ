@@ -34,70 +34,19 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 	{
 		switch (packet_id)
 		{
-			case ID_Request_Auth_To_World_AllocateUser:
-			{
-				AllocateUser(id, reinterpret_cast<Request_Auth_To_World_AllocateUser*>(packet));
-				break;
-			}
-			case ID_Response_DB_To_World_GetUserStatus:
-			{
-				GetUserState(id, reinterpret_cast<Response_DB_To_World_GetUserStatus*>(packet));
-				break;
-			}
-			case ID_Request_Enter_GameWorld:
-			{
-				EnterGameWorld(id, reinterpret_cast<Request_Enter_GameWorld*>(packet));
-				break;
-			}
-			case ID_MOVE:
-			{
-				Move(id, reinterpret_cast<MOVE*>(packet));
-				break;
-			}
-			case ID_ATTACK:
-			{
-				Attack(id, nullptr);
-				break;
-			}
-			case ID_CHAT:
-			{
-				SendChatMessage(id, reinterpret_cast<CHAT*>(packet));
-				break;
-			}
-			case ID_LOGOUT:
-			{
-				Logout(id, reinterpret_cast<LOGOUT*>(packet));
-				break;
-			}
-			case ID_Notify_NPC_To_World_NPCreated:
-			{
-				NPCCreated(id, reinterpret_cast<Notify_NPC_To_World_NPCreatedAdd_NPC*>(packet));
-				break;
-			}
-			case ID_Notify_NPC_To_World_NPCMove:
-			{
-				break;
-			}
-			case ID_Notify_NPC_To_World_NPCDieFromPlayer:
-			{
-				NPCDieFromPlayer(id, reinterpret_cast<Notify_NPC_To_World_NPCDieFromPlayer*>(packet));
-				break;
-			}
-			case ID_Notify_NPC_To_World_NPCDamaged:
-			{
-				NPCDamaged(id, reinterpret_cast<Notify_NPC_To_World_NPCDamaged*>(packet));
-				break;
-			}
-			case ID_Notify_NPC_To_World_NPCAttackPlayer:
-			{
-				NPCAttackPlayer(id, reinterpret_cast<Notify_NPC_To_World_NPCAttackPlayer*>(packet));
-				break;
-			}
-			case ID_Response_NPC_To_World_NPCMessage:
-			{
-				NotifyNPCMesage(id, reinterpret_cast<Response_NPC_To_World_NPCMessage*>(packet));
-				break;
-			}
+			case ID_Request_Auth_To_World_AllocateUser: { AllocateUser(id, reinterpret_cast<Request_Auth_To_World_AllocateUser*>(packet)); break; }
+			case ID_Response_DB_To_World_GetUserStatus: { GetUserState(id, reinterpret_cast<Response_DB_To_World_GetUserStatus*>(packet)); break; }
+			case ID_Request_Enter_GameWorld: { EnterGameWorld(id, reinterpret_cast<Request_Enter_GameWorld*>(packet)); break; }
+			case ID_MOVE: { Move(id, reinterpret_cast<MOVE*>(packet)); break; }
+			case ID_ATTACK: { Attack(id, nullptr); break; } // 만들기는 이렇게 만들었는데 만들고 나니까 패킷 던질 필요 없어서 걍 nullptr로 전달.
+			case ID_CHAT: { SendChatMessage(id, reinterpret_cast<CHAT*>(packet)); break; }
+			case ID_LOGOUT: { Logout(id, reinterpret_cast<LOGOUT*>(packet)); break; }
+			case ID_Notify_NPC_To_World_NPCreated: { NPCCreated(id, reinterpret_cast<Notify_NPC_To_World_NPCreatedAdd_NPC*>(packet)); break; }
+			case ID_Notify_NPC_To_World_NPCMove: { NPCMove(id, reinterpret_cast<Notify_NPC_To_World_NPCMove*>(packet)); break; }
+			case ID_Notify_NPC_To_World_NPCDieFromPlayer: { NPCDieFromPlayer(id, reinterpret_cast<Notify_NPC_To_World_NPCDieFromPlayer*>(packet)); break; }
+			case ID_Notify_NPC_To_World_NPCDamaged: { NPCDamaged(id, reinterpret_cast<Notify_NPC_To_World_NPCDamaged*>(packet)); break; }
+			case ID_Notify_NPC_To_World_NPCAttackPlayer: { NPCAttackPlayer(id, reinterpret_cast<Notify_NPC_To_World_NPCAttackPlayer*>(packet)); break; }
+			case ID_Response_NPC_To_World_NPCMessage: { NotifyNPCMesage(id, reinterpret_cast<Response_NPC_To_World_NPCMessage*>(packet)); break; }
 		}
 	}
 }
@@ -274,7 +223,7 @@ void WorldServer::InitStatusTable()
 
 }
 
-void WorldServer::MovePlayer(int id, Player * p)
+void WorldServer::MoveObject(int id, Player * p)
 {
 	Notify_Player_Move_Position notify;
 	notify.id = p->GetId();
@@ -341,7 +290,7 @@ void WorldServer::MovePlayer(int id, Player * p)
 
 						if ((*iter_b).second->GetType() != ObjectType::NonPlayer)
 						{
-							Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&notify));
+							Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&notify));
 						}
 						else
 						{
@@ -609,7 +558,7 @@ void WorldServer::Move(const int id, MOVE * req)
 {
 	Player* myPlayer = players[id];
 	world->MoveObject(myPlayer, req->DIR);
-	MovePlayer(id, myPlayer);
+	MoveObject(id, myPlayer);
 }
 
 void WorldServer::Attack(const int id, ATTACK * req)
@@ -684,7 +633,7 @@ void WorldServer::NPCCreated(const int id, Notify_NPC_To_World_NPCreatedAdd_NPC 
 	for (; iter_b != iter_e; ++iter_b)
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
-			Send(socketIds[(*iter_b).second->GetId()], pk);
+			Send(socketIds[(*iter_b).first], pk);
 	}
 }
 
@@ -703,7 +652,7 @@ void WorldServer::NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromP
 	for (; iter_b != iter_e; ++iter_b)
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
-			Send(socketIds[(*iter_b).second->GetId()], pk);
+			Send(socketIds[(*iter_b).first], pk);
 	}
 
 	world->RemoveObject(o->GetX(), o->GetY());
@@ -755,7 +704,7 @@ void WorldServer::NPCDamaged(const int id, Notify_NPC_To_World_NPCDamaged * not)
 	for (; iter_b != iter_e; ++iter_b)
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
-			Send(socketIds[(*iter_b).second->GetId()], pk);
+			Send(socketIds[(*iter_b).first], pk);
 	}
 }
 
@@ -789,7 +738,7 @@ void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPla
 		p->SetY(p->GetStartY());
 		world->SetSector(p, p->GetX(), p->GetY());
 
-		MovePlayer(target_id, p);
+		MoveObject(target_id, p);
 
 		Notify_World_To_NPC_NPCStopAttackPlayer not;
 		not.npc_id = npc_id;
@@ -814,13 +763,13 @@ void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPla
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
 		{
-			Send(socketIds[(*iter_b).second->GetId()], pk);
+			Send(socketIds[(*iter_b).first], pk);
 
 			if (player_die == true)
 			{
 				REMOVE_OBJECT removePacket;
 				removePacket.ID = not->target_id;
-				Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&removePacket));
+				Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&removePacket));
 			}
 		}
 	}
@@ -889,9 +838,44 @@ void WorldServer::NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage
 		if ((*iter_b).second->GetType() == ObjectType::Player)
 		{
 			notMsg.sender_id = p->GetId();
-			Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&notMsg));
+			Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&notMsg));
 		}
 	}
 
+}
+
+void WorldServer::NPCMove(const int id, Notify_NPC_To_World_NPCMove * not)
+{
+	Object *obj = world->GetObjectById(not->npc_id);
+
+	if (obj != nullptr)
+	{
+		obj->SetX(not->x);
+		obj->SetY(not->y);
+
+		world->SetSector(obj, obj->GetX(), obj->GetY());
+
+		short sec_x = obj->getCurrSectorX();
+		short sec_y = obj->getCurrSectorY();
+
+		auto iter_b = world->GetPlayerBegin(sec_x, sec_y);
+		auto iter_e = world->GetPlayerEnd(sec_x, sec_y);
+
+		Notify_Player_Move_Position packet;
+
+		packet.id = not->npc_id;
+		packet.x = not->x;
+		packet.y = not->y;
+
+		unsigned char* pk = reinterpret_cast<unsigned char*>(&packet);
+
+		for (; iter_b != iter_e; ++iter_b)
+		{
+			if ((*iter_b).second->GetType() == ObjectType::Player)
+			{
+				Send(socketIds[(*iter_b).first], pk);
+			}
+		}
+	}
 }
 
