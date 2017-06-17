@@ -95,3 +95,8 @@ void AuthServer::Logging(const wchar_t * msg, ...)
 	va_end(ap);
 	std::cout << std::endl;
 }
+
+void AuthServer::OnCloseSocket(const int id)
+{
+	Logging(L"Player %d is disconnected from Auth", id);
+}

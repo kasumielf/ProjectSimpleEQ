@@ -2,6 +2,7 @@
 
 Player::~Player()
 {
+	view_list.clear();
 }
 
 void Player::GainExp(unsigned long _exp)

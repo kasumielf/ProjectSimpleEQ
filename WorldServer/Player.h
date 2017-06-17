@@ -20,12 +20,12 @@ class Player : public Object
 
 	unsigned short base_damage;
 
-	unsigned short start_x;
-	unsigned short start_y;
+	short start_x;
+	short start_y;
 
-	std::unordered_map<unsigned int, Faction> factions;
+	//std::unordered_map<unsigned int, Faction> factions;
 	std::unordered_map<unsigned int, ObjectType> view_list;
-	std::list<Quest> quests;
+	//std::list<Quest> quests;
 
 public:
 	Player(unsigned int _uid) : Object(_uid, ObjectType::Player) {}
@@ -38,8 +38,8 @@ public:
 	void SetMaxHp(unsigned short _hp) { max_hp = _hp; }
 	void SetBaseDamage(unsigned short _dmg) { base_damage = _dmg; }
 	void SetRequiredExp(unsigned long _exp) { require_exp = _exp; }
-	void SetStartX(unsigned long _x) { start_x = _x; }
-	void SetStartY(unsigned long _y) { start_y = _y; }
+	void SetStartX(short _x) { start_x = _x; }
+	void SetStartY(short _y) { start_y = _y; }
 
 	void GainExp(unsigned long _exp);
 
@@ -50,8 +50,8 @@ public:
 	const unsigned short GetMaxHp() { return max_hp; }
 	const unsigned short GetBaseDamage() { return base_damage; }
 	void IncreaseHP(unsigned short hp);
-	const unsigned short GetStartX() { return start_x; }
-	const unsigned short GetStartY() { return start_y; }
+	const short GetStartX() { return start_x; }
+	const short GetStartY() { return start_y; }
 
 
 	const unsigned int GetRealDamage() { return base_damage; }

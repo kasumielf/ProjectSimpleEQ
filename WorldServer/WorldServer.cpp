@@ -65,8 +65,23 @@ void WorldServer::OnCloseSocket(const int id)
 	Logging(L"Player %d is closed", id);
 
 	Lock();
-	world->DeleteObject(players[id]);
-	players[id] = nullptr;
+
+	Player *o = players[id];
+
+	if (o != nullptr)
+	{
+		socketIds.erase(o->GetId());
+		Logging(L"Player %d is closed", id);
+		world->DeleteObject(o);
+		players[id] = nullptr;
+		
+
+		//delete o;
+	}
+	else
+	{
+	}
+
 	Unlock();
 }
 
@@ -223,10 +238,12 @@ void WorldServer::InitStatusTable()
 
 }
 
-void WorldServer::MoveObject(int id, Player * p)
+void WorldServer::MoveObject(unsigned int sock_id, Player * p)
 {
+	unsigned int user_id = p->GetId();
+
 	Notify_Player_Move_Position notify;
-	notify.id = p->GetId();
+	notify.id = user_id;
 	notify.x = p->GetX();
 	notify.y = p->GetY();
 
@@ -276,7 +293,7 @@ void WorldServer::MoveObject(int id, Player * p)
 
 			for (; iter_b != iter_e; ++iter_b)
 			{
-				if ((*iter_b).second != nullptr && (*iter_b).second->GetId() != id)
+				if ((*iter_b).second != nullptr && (*iter_b).second->GetId() != user_id)
 				{
 					short x = (*iter_b).second->GetX();
 					short y = (*iter_b).second->GetY();
@@ -291,11 +308,6 @@ void WorldServer::MoveObject(int id, Player * p)
 						if ((*iter_b).second->GetType() != ObjectType::NonPlayer)
 						{
 							Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&notify));
-						}
-						else
-						{
-							overlapped.caller_id = id;
-							//PostQueuedCompletionStatus(m_iocp_handle, 1, socketIds[(*iter_b).second->GetId()], reinterpret_cast<LPOVERLAPPED>(&overlapped));
 						}
 					}
 					else
@@ -315,30 +327,33 @@ void WorldServer::MoveObject(int id, Player * p)
 			ObjectType target_type = target.second;
 
 			ADD_OBJECT addNotify;
+			addNotify.TYPE = (char)target_type;
 			addNotify.x = p->GetX();
 			addNotify.y = p->GetY();
 			wcscpy_s(addNotify.name, p->GetName());
 
 			if (target_type == ObjectType::Player)
 			{
+				addNotify.TYPE = (char)ObjectType::Player;
 				addNotify.ID = target_id;
 				p->AddViewList(target_id, target_type);
-				p->AddViewList(id, ObjectType::Player);
-				Send(id, reinterpret_cast<unsigned char*>(&addNotify));
+				p->AddViewList(user_id, ObjectType::Player);
+				Send(sock_id, reinterpret_cast<unsigned char*>(&addNotify));
 
-				addNotify.ID = id;
+				addNotify.ID = user_id;
 				wcscpy_s(addNotify.name, p->GetName());
 				Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&addNotify));
 			}
 			else
 			{
+				addNotify.TYPE = (char)ObjectType::NonPlayer;
 				addNotify.ID = target_id;
 				addNotify.x = world->GetObjectById(target_id)->GetX();
 				addNotify.y = world->GetObjectById(target_id)->GetY();
 				wcscpy_s(addNotify.name, world->GetObjectById(target_id)->GetName());
 
 				p->AddViewList(target_id, target_type);
-				Send(id, reinterpret_cast<unsigned char*>(&addNotify));
+				Send(sock_id, reinterpret_cast<unsigned char*>(&addNotify));
 			}
 		}
 	}
@@ -357,16 +372,16 @@ void WorldServer::MoveObject(int id, Player * p)
 			if (target_type == ObjectType::Player)
 			{
 				p->RemoveViewList(target_id);
-				p->RemoveViewList(id);
-				Send(id, reinterpret_cast<unsigned char*>(&dspNotify));
-				dspNotify.ID = id;
+				p->RemoveViewList(user_id);
+				Send(sock_id, reinterpret_cast<unsigned char*>(&dspNotify));
+				dspNotify.ID = user_id;
 				Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&dspNotify));
 			}
 			else
 			{
 				dspNotify.ID = target_id;
 				p->RemoveViewList(target_id);
-				Send(id, reinterpret_cast<unsigned char*>(&dspNotify));
+				Send(sock_id, reinterpret_cast<unsigned char*>(&dspNotify));
 			}
 		}
 	}
@@ -390,7 +405,6 @@ void WorldServer::AllocateUser(const int id, Request_Auth_To_World_AllocateUser 
 		res.RESPONSE_ID = req->RESPONSE_ID;
 		res.client_id = req->RESPONSE_ID;
 		res.success = false;
-
 
 		Logging(L"User(uid %d) is failed allocated in Game World", req->user_uid);
 		Send(id, reinterpret_cast<unsigned char*>(&res));
@@ -486,7 +500,7 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 
 		Notify_Player_Enter notify;
 
-		notify.user_uid = id;
+		notify.user_uid = p->GetId();
 		notify.x = my_x;
 		notify.y = my_y;
 		wcscpy_s(notify.player_name, p->GetName());
@@ -542,6 +556,7 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 							addNotify.ID = o->GetId();
 							addNotify.x = o->GetX();
 							addNotify.y = o->GetY();
+							addNotify.TYPE = (char)o->GetType();
 							wcscpy_s(addNotify.name, o->GetName());
 
 							Send(id, reinterpret_cast<unsigned char*>(&addNotify));
@@ -559,6 +574,14 @@ void WorldServer::Move(const int id, MOVE * req)
 	Player* myPlayer = players[id];
 	world->MoveObject(myPlayer, req->DIR);
 	MoveObject(id, myPlayer);
+
+	Notify_World_To_NPC_PlayerMove not;
+
+	not.player_id = myPlayer->GetId();
+	not.x = myPlayer->GetX();
+	not.y = myPlayer->GetY();
+
+	SendToInternal("NPC", reinterpret_cast<unsigned char*>(&not));
 }
 
 void WorldServer::Attack(const int id, ATTACK * req)
@@ -585,14 +608,6 @@ void WorldServer::Logout(const int id, LOGOUT * req)
 	Object *o = players[id];
 
 	if (o != nullptr)
-	{
-		Logging(L"Player %d is closed", id);
-		Lock();
-		world->DeleteObject(players[id]);
-		players[id] = nullptr;
-		Unlock();
-	}
-	else
 	{
 		CloseSocket(id);
 	}
@@ -738,7 +753,7 @@ void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPla
 		p->SetY(p->GetStartY());
 		world->SetSector(p, p->GetX(), p->GetY());
 
-		MoveObject(target_id, p);
+		MoveObject(socketIds[target_id], p);
 
 		Notify_World_To_NPC_NPCStopAttackPlayer not;
 		not.npc_id = npc_id;
@@ -861,7 +876,7 @@ void WorldServer::NPCMove(const int id, Notify_NPC_To_World_NPCMove * not)
 		auto iter_b = world->GetPlayerBegin(sec_x, sec_y);
 		auto iter_e = world->GetPlayerEnd(sec_x, sec_y);
 
-		Notify_Player_Move_Position packet;
+		Notify_NPC_Move_Position packet;
 
 		packet.id = not->npc_id;
 		packet.x = not->x;

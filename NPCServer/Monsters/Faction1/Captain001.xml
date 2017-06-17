@@ -7,5 +7,5 @@
 	<BaseDamage>100</BaseDamage>
 	<FactionGroup>1</FactionGroup>
 	<RespawnTime>600000</RespawnTime>
-	<DescriptScript src="Monster\\Faction2\\Descript\\Captain.lua"></DescriptScript>
+	<DescriptScript src="Monsters\\Faction2\\Descript\\Captain.lua"></DescriptScript>
 </Monster>

@@ -24,7 +24,8 @@ namespace ServerPacket
         ID_Notify_Player_Die = 20,
         ID_Notify_Player_Info = 21,
         ID_Notify_Player_HPRegen = 22,
-        ID_Notify_ChatMessage = 23
+        ID_Notify_ChatMessage = 23,
+        ID_Notify_NPC_Move = 24,
     }
 
     [Serializable]
@@ -273,7 +274,7 @@ namespace ServerPacket
     };
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     class Notify_ChatMessage : BasePacket
     {
         Notify_ChatMessage()
@@ -287,6 +288,20 @@ namespace ServerPacket
         public string sender_name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
         public string message;
+    };
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    class Notify_NPC_Move_Position : BasePacket
+    {
+        Notify_NPC_Move_Position()
+        {
+            PACKET_ID = PacketId.ID_Notify_NPC_Move;
+            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_NPC_Move_Position));
+        }
+        public uint id;
+        public ushort x;
+        public ushort y;
     };
 }
 

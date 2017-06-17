@@ -21,20 +21,22 @@ public class WorldScene : MonoBehaviour {
     public Text myBaseDmg;
 
     public BaseEnemy baseEnemyPrefab;
+    public BasePlayer basePlayerPrefab;
 
     public Text damageLog;
     public Text chatLog;
 
     private Player myPlayer;
-    private Dictionary<uint, Player> players;
     private Dictionary<uint, BaseEnemy> mobs;
-    private List<Objects.Object> mySightList;
-    private Dictionary<uint, GameObject> playerObject;
+    private Dictionary<uint, BasePlayer> players;
     public GameObject myPlayerObject;
 
     public InputField chatMessage;
 
     MOVE movePacket = new MOVE();
+
+    byte mydir;
+    byte rotation = 1;
 
     public NetworkManager nm;
 
@@ -42,9 +44,9 @@ public class WorldScene : MonoBehaviour {
     void Start()
     {
         baseEnemyPrefab = Resources.Load("Prefabs/BaseEnemy", typeof(BaseEnemy)) as BaseEnemy;
+        basePlayerPrefab = Resources.Load("Prefabs/BasePlayer", typeof(BasePlayer)) as BasePlayer;
         mobs = new Dictionary<uint, BaseEnemy>();
-        playerObject = new Dictionary<uint, GameObject>();
-        players = new Dictionary<uint, Player>();
+        players = new Dictionary<uint, BasePlayer>();
     }
 
     private void Awake()
@@ -87,10 +89,23 @@ public class WorldScene : MonoBehaviour {
                     }
                     else
                     {
-                        players[user_uid].x = x;
-                        players[user_uid].y = y;
-                        playerObject[user_uid].transform.position = new Vector3(x, 0.1f, y);
+                        if (players.ContainsKey(user_uid) == true)
+                        {
+                            players[user_uid].baseObject.x = x;
+                            players[user_uid].baseObject.y = y;
+                        }
                     }
+                    break;
+                }
+            case MessageType.UPDATE_NPC_POSITION:
+                {
+                    uint npc_id = Convert.ToUInt32(msg.GetParam(0));
+                    ushort x = Convert.ToUInt16(msg.GetParam(1));
+                    ushort y = Convert.ToUInt16(msg.GetParam(2));
+
+                    mobs[npc_id].baseObject.x = x;
+                    mobs[npc_id].baseObject.y = y;
+
                     break;
                 }
             case MessageType.ATTACK_NPC:
@@ -113,6 +128,20 @@ public class WorldScene : MonoBehaviour {
                         bm.baseObject = npc;
 
                         mobs.Add(npc.id, bm);
+                    }
+
+                    break;
+                }
+            case MessageType.CREATE_PLAYER:
+                {
+                    Player p = msg.GetParam(0) as Player;
+
+                    if (mobs.ContainsKey(p.id) == false)
+                    {
+                        BasePlayer bm = Instantiate(basePlayerPrefab, new Vector3(-1, -1, -1), Quaternion.identity);
+                        bm.baseObject = p;
+
+                        players.Add(p.id, bm);
                     }
 
                     break;
@@ -250,7 +279,7 @@ public class WorldScene : MonoBehaviour {
     void Update() {
         UpdateMyPlayerUI();
 
-        if (chatMessage.isFocused == false)
+        //if (chatMessage.isFocused == false)
         {
             if (Input.GetKeyDown(KeyCode.W))
             {
@@ -278,10 +307,16 @@ public class WorldScene : MonoBehaviour {
             }
             else if (Input.GetKeyDown(KeyCode.Q))
             {
+                if (--rotation <= 0)
+                    rotation = 1;
+                
                 myPlayerObject.transform.Rotate(Vector3.up, -90);
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
+                if (++rotation > 4)
+                    rotation = 1;
+
                 myPlayerObject.transform.Rotate(Vector3.up, 90);
             }
             else if (Input.GetKeyDown(KeyCode.F))
@@ -335,7 +370,6 @@ public class WorldScene : MonoBehaviour {
                     ServerPacket.LOGIN_OK res = (ServerPacket.LOGIN_OK)Utility.ByteArrayToObject(data, typeof(ServerPacket.LOGIN_OK));
 
                     Player p = new Player();
-                    mySightList = new List<Objects.Object>();
 
                     p.id = res.id;
                     p.name = new string(res.username.ToCharArray());
@@ -354,6 +388,7 @@ public class WorldScene : MonoBehaviour {
                     msg.Push(p.x);
                     msg.Push(p.y);
                     MessageQueue.getInstance.Enqueue(msg);
+
                     break;
                 }
             case ServerPacket.PacketId.ID_Notify_Player_Attack_NPC:
@@ -367,21 +402,60 @@ public class WorldScene : MonoBehaviour {
                     MessageQueue.getInstance.Enqueue(msg);
                     break;
                 }
+            case ServerPacket.PacketId.ID_Notify_Player_Enter:
+                {
+                    ServerPacket.Notify_Player_Enter res = (ServerPacket.Notify_Player_Enter)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_Player_Enter));
+                    Player p = new Player();
+
+                    p.id = res.user_uid;
+                    p.name = res.player_name;
+                    p.state = ObjectState.Idle;
+                    p.x = res.x;
+                    p.y = res.y;
+
+                    Message msg = new Message(MessageType.CREATE_PLAYER);
+                    msg.Push(p);
+                    MessageQueue.getInstance.Enqueue(msg);
+
+                    break;
+                }
             case ServerPacket.PacketId.ID_ADD_OBJECT:
                 {
                     ServerPacket.ADD_OBJECT res = (ServerPacket.ADD_OBJECT)Utility.ByteArrayToObject(data, typeof(ServerPacket.ADD_OBJECT));
 
-                    NonPlayer npc = new NonPlayer();
+                    if (res.TYPE == (char)ObjectType.NonPlayer)
+                    {
+                        NonPlayer npc = new NonPlayer();
 
-                    npc.id = res.ID;
-                    npc.name = res.name;
-                    npc.state = ObjectState.Idle;
-                    npc.x = res.x;
-                    npc.y = res.y;
+                        npc.id = res.ID;
+                        npc.name = res.name;
+                        npc.state = ObjectState.Idle;
+                        npc.x = res.x;
+                        npc.y = res.y;
 
-                    Message msg = new Message(MessageType.CREATE_NPC);
-                    msg.Push(npc);
-                    MessageQueue.getInstance.Enqueue(msg);
+                        Message msg = new Message(MessageType.CREATE_NPC);
+                        msg.Push(npc);
+                        MessageQueue.getInstance.Enqueue(msg);
+                    }
+                    else if (res.TYPE == (char)ObjectType.NonPlayer)
+                    {
+                        Player p = new Player();
+
+                        p.id = res.ID;
+                        p.name = res.name;
+                        p.state = ObjectState.Idle;
+                        p.x = res.x;
+                        p.y = res.y;
+
+                        Message msg = new Message(MessageType.CREATE_PLAYER);
+                        msg.Push(p);
+                        MessageQueue.getInstance.Enqueue(msg);
+                    }
+                    else
+                    {
+
+                    }
+
                     break;
                 }
 
@@ -428,6 +502,18 @@ public class WorldScene : MonoBehaviour {
                     ServerPacket.Notify_Player_Move_Position res = (ServerPacket.Notify_Player_Move_Position)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_Player_Move_Position));
 
                     Message msg = new Message(MessageType.UPDATE_USER_POSITION);
+                    msg.Push(res.id);
+                    msg.Push(res.x);
+                    msg.Push(res.y);
+                    MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+
+            case ServerPacket.PacketId.ID_Notify_NPC_Move:
+                {
+                    ServerPacket.Notify_NPC_Move_Position res = (ServerPacket.Notify_NPC_Move_Position)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_NPC_Move_Position));
+
+                    Message msg = new Message(MessageType.UPDATE_NPC_POSITION);
                     msg.Push(res.id);
                     msg.Push(res.x);
                     msg.Push(res.y);

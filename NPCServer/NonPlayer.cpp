@@ -1,5 +1,5 @@
 #include "NonPlayer.h"
-
+#include <iostream>
 
 NonPlayer::~NonPlayer()
 {
@@ -11,18 +11,29 @@ void NonPlayer::InitLuaScript(const char * filename)
 	l = luaL_newstate();
 	luaL_openlibs(l);
 	luaL_loadfile(l, filename);
-	lua_pcall(l, 0, 0, 0);
+	if (lua_pcall(l, 0, 0, 0) != 0)
+	{
+		std::cout << "Lua Error : " << (char *)lua_tostring(l, -1) << std::endl;
+	}
+	else
+	{
+		has_script = true;
+	}
 }
 
 void NonPlayer::DoLuaConversation(void* server_ptr, unsigned int player, char * msg)
 {
 	lua_getglobal(l, "DoConversation");
 	lua_pushlightuserdata(l, server_ptr);
+	lua_pushnumber(l, GetId());
 	lua_pushnumber(l, player);
 	lua_pushnumber(l, 0);
 	lua_pushstring(l, msg);
-	lua_pcall(l, 4, 1, 0);
-	lua_pop(l, 4);
+	if (lua_pcall(l, 5, 1, 0) != 0)
+	{
+		std::cout << "Lua Error : " << (char *)lua_tostring(l, -1) << std::endl;
+	}
+	lua_pop(l, 5);
 }
 
 void NonPlayer::SetRegenTime()

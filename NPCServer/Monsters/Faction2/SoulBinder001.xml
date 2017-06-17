@@ -6,5 +6,5 @@
 	<BaseDamage>100</BaseDamage>
 	<FactionGroup>2</FactionGroup>
 	<RespawnTime>3600000</RespawnTime>
-	<DescriptScript src="Monster\\Faction2\\Descript\\SoulBinder.lua"></DescriptScript>
+	<DescriptScript src="Monsters\\Faction2\\Descript\\SoulBinder.lua"></DescriptScript>
 </Monster>

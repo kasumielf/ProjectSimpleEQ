@@ -56,5 +56,5 @@ public:
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
 };
 
-static int SYSTEM_Set_RespawnPosition(lua_State * l);
-static int SYSTEM_Send_Message(lua_State * l);
+//static int SYSTEM_Set_RespawnPosition(lua_State * l);
+//static int SYSTEM_Send_Message(lua_State * l);

@@ -61,8 +61,8 @@ void World::DeleteObject(Object * obj)
 	sector[obj->getCurrSectorY()][obj->getCurrSectorX()].RemovePlayer(obj->GetId());
 	objects.erase(obj->GetId());
 	RemoveObject(obj->GetX(), obj->GetY());
+
 	delete obj;
-	obj = nullptr;
 }
 
 void World::RemoveObject(unsigned short x, unsigned short y)

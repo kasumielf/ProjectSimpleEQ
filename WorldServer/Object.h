@@ -9,8 +9,8 @@ private:
 	wchar_t name[12];
 
 	unsigned int id;
-	unsigned int x;
-	unsigned int y;
+	short x;
+	short y;
 
 	ObjectType type;
 	ObjectState state;
@@ -22,16 +22,16 @@ public:
 	Object(unsigned int _id, ObjectType _type) : id(_id), type(_type), state(ObjectState::Idle) , current_sector_x(-1), current_sector_y(-1) {}
 	~Object();
 
-	void SetX(unsigned int _x) { x = _x; }
-	void SetY(unsigned int _y) { y = _y; }
+	void SetX(short _x) { x = _x; }
+	void SetY(short _y) { y = _y; }
 	void SetCurrentState(ObjectState _state) { state = _state; }
 	void SetName(wchar_t* _name);
 
 	const unsigned int GetId() { return id; }
 	const ObjectType GetType() { return type; }
 	const ObjectState GetCurrentState() { return state; }
-	const unsigned int GetX() { return x; }
-	const unsigned int GetY() { return y; }
+	const short GetX() { return x; }
+	const short GetY() { return y; }
 	wchar_t* GetName() { return name; }
 
 	void MoveByDirection(const char direction);

@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "../Common/Defines.h"
 #include <iostream>
 
 Object::~Object()
@@ -19,4 +20,17 @@ void Object::MoveByDirection(const char direction)
 	case 6: y--; break;
 	case 8: x--; break;
 	}
+
+	if (x > MAX_WORLD_WIDTH)
+		x = MAX_WORLD_WIDTH - 1;
+
+	if (x < 0)
+		x = 0;
+
+	if (y > MAX_WORLD_HEIGHT)
+		y = MAX_WORLD_HEIGHT - 1;
+
+	if (y < 0)
+		y = 0;
+
 }

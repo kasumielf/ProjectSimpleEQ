@@ -38,7 +38,7 @@ public:
 	Status& GetLevelData(unsigned int level) { return level_data[level]; }
 
 	void InitStatusTable();
-	void MoveObject(int id, Player* p);
+	void MoveObject(unsigned int sock_id, Player* p);
 
 	void AllocateUser(const int id, Request_Auth_To_World_AllocateUser* req);
 	void GetUserState(const int id, Response_DB_To_World_GetUserStatus* res);

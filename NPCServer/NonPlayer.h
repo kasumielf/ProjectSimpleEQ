@@ -28,7 +28,7 @@ private:
 
 	unsigned char attack_count;
 	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> next_regen_time;
-
+	bool has_script = false;
 
 public:
 	NonPlayer(unsigned int _id, double _rtime) : Object(_id, ObjectType::NonPlayer), respawn_time(_rtime) {}
@@ -54,6 +54,7 @@ public:
 	const double GetRespawnTime() { return respawn_time; }
 	const unsigned int GetAttackTarget() { return attack_target; }
 
+	bool HasScript() { return has_script; }
 	lua_State* GetLuaState() { return l; }
 	void InitLuaScript(const char* filename);
 	void DoLuaConversation(void* server_ptr, unsigned int player, char* msg);

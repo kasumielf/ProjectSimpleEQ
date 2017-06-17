@@ -26,11 +26,17 @@ public class LoginScene : MonoBehaviour {
                     _msg.Push(msg.GetParam(2));
                     MessageQueue.getInstance.Enqueue(_msg);
 
+                    nm.Disconnect();
                     SceneManager.LoadScene("WorldScene");
 
                     break;
                 }
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        nm.Disconnect();
     }
 
     private IEnumerator checkMessageQueue()
@@ -93,11 +99,6 @@ public class LoginScene : MonoBehaviour {
                 }
                 break;
         }
-    }
-
-    private void OnApplicationQuit()
-    {
-        nm.Disconnect();
     }
 
     public void Login()

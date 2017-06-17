@@ -214,17 +214,15 @@ void BaseServer::CloseSocket(const int id)
 void BaseServer::Send(const int id, unsigned char * packet)
 {
 	unsigned short psize = (unsigned short)packet[1];
-
 	OverlappedEx *over = new OverlappedEx;
-
+	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
 	over->optype = IOCPOpType::OpSend;
 	memcpy(over->iocp_buffer, packet, psize);
-	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
-
 	over->wsaBuf.buf = reinterpret_cast<CHAR *>(over->iocp_buffer);
 	over->wsaBuf.len = psize;
 
-	int ret = WSASend(m_sessions[id]->socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
+	DWORD send_flag = 0;
+	int ret = WSASend(m_sessions[id]->socket, &over->wsaBuf, 1, NULL, send_flag, &over->wsaOverlapped, NULL);
 
 	if (ret != 0)
 	{

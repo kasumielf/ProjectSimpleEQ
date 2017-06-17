@@ -1,6 +1,36 @@
 #include "NPCServer.h"
 #include <iostream>
 
+static int SYSTEM_Set_RespawnPosition(lua_State * l)
+{
+	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -2));
+	int player_id = (int)lua_tonumber(l, -1);
+
+	std::cout << "bind" << std::endl;
+	lua_pop(l, 7);
+	return 0;
+}
+
+static int SYSTEM_Send_Message(lua_State * l)
+{
+	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -4));
+	int npc_id = (int)lua_tonumber(l, -3);
+	int player_id = (int)lua_tonumber(l, -2);
+	const char* answer = lua_tostring(l, -1);
+
+	Response_NPC_To_World_NPCMessage res;
+	res.RESPONSE_ID = player_id;
+	res.npc_id = npc_id;
+
+	size_t cs;
+	mbstowcs_s(&cs, res.message,MAX_CHAT_MESSAGE_LENGTH ,answer, MAX_CHAT_MESSAGE_LENGTH);
+
+	cls->SendToInternal("World", reinterpret_cast<unsigned char*>(&res));
+	lua_pop(l, 9);
+
+	return 0;
+}
+
 NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity, port), last_add_npc_id(NPC_START_ID)
 {
 	AttachIOCPEvent(IOCPOpType::OpNPCAttack, std::bind(&NPCServer::NPCAttackUpdate, this, std::placeholders::_1, this));
@@ -62,10 +92,8 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 		{
 			const char* filename = scriptelem->Attribute("src");
 			npc->InitLuaScript(filename);
-			lua_State *l = npc->GetLuaState();
-
-			lua_register(l, "SYSTEM_Send_Message", SYSTEM_Send_Message);
-			lua_register(l, "SYSTEM_Set_RespawnPosition", SYSTEM_Set_RespawnPosition);
+			lua_register(npc->GetLuaState(), "SYSTEM_Send_Message", SYSTEM_Send_Message);
+			lua_register(npc->GetLuaState(), "SYSTEM_Set_RespawnPosition", SYSTEM_Set_RespawnPosition);
 		}
 
 		npc->SetLevel(level);
@@ -163,7 +191,7 @@ void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
 			unsigned short my_y = npc->GetY();
 
 			unsigned short target_x = self->players[npc->GetAttackTarget()]->GetX();
-			unsigned short target_y = self->players[npc->GetAttackTarget()]->GetX();
+			unsigned short target_y = self->players[npc->GetAttackTarget()]->GetY();
 
 			if (self->IsClosed(my_x, my_y, target_x, target_y))
 			{
@@ -211,7 +239,7 @@ void NPCServer::NPCMove(unsigned int id, NPCServer * self)
 	if (npc == nullptr)
 		return;
 
-	self->NPCMoveProcess(npc, self->players[npc->GetAttackTarget]);
+	self->NPCMoveProcess(npc, self->players[npc->GetAttackTarget()]);
 }
 
 void NPCServer::ProcessPacket(const int id, unsigned char * packet)
@@ -363,45 +391,20 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 
 	if (IsClosed(np->GetX(), np->GetY(), p->GetX(), p->GetY()))
 	{
-		//ToDO Chat Script
-		Response_NPC_To_World_NPCMessage res;
-		res.RESPONSE_ID = req->sender_id;
-		res.npc_id = np->GetId();
-
-		char* msg;
+		std::cout << "closed! " << p->GetId() << " " << np->GetId() << std::endl;
+		std::cout << np->GetX() << " " << np->GetY() << " " << p->GetX() << " " << p->GetY() << std::endl;
+		char msg[MAX_CHAT_MESSAGE_LENGTH];
 
 		wcstombs(msg, req->message, MAX_CHAT_MESSAGE_LENGTH);
 
-		if (np->GetLuaState() != nullptr)
+		if (np->HasScript() == true)
 			np->DoLuaConversation((void*)this, p->GetId(), msg);
-
-		Send(id, reinterpret_cast<unsigned char*>(&res));
 	}
 }
 
 bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
 {
-	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1 * 1;
+	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1;
 }
 
-int SYSTEM_Set_RespawnPosition(lua_State * l)
-{
-	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -2));
-	int player_id = (int)lua_tonumber(l, -1);
 
-	std::cout << "bind" << std::endl;
-
-	return 0;
-}
-
-int SYSTEM_Send_Message(lua_State * l)
-{
-	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -3));
-	int player_id = (int)lua_tonumber(l, -2);
-	const char* answer = lua_tostring(l, -3);
-	lua_pop(l, 8);
-
-	std::cout << "anser : " << std::endl;
-
-	return 0;
-}

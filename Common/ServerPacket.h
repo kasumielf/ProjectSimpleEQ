@@ -15,7 +15,7 @@ const unsigned char ID_Notify_Player_Die = 20;
 const unsigned char ID_Notify_Player_Info = 21;
 const unsigned char ID_Notify_Player_HPRegen = 22;
 const unsigned char ID_Notify_ChatMessage = 23;
-
+const unsigned char ID_Notify_NPC_Move = 24;
 const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
 const unsigned char ID_Notify_NPC_Damaged = 73;
@@ -170,6 +170,18 @@ struct Notify_Player_Move_Position : BasePacket
 	{
 		PACKET_ID = ID_Notify_Player_Move;
 		SIZE = sizeof(Notify_Player_Move_Position);
+	}
+	unsigned int id;
+	unsigned short x;
+	unsigned short y;
+};
+
+struct Notify_NPC_Move_Position : BasePacket
+{
+	Notify_NPC_Move_Position()
+	{
+		PACKET_ID = ID_Notify_NPC_Move;
+		SIZE = sizeof(Notify_NPC_Move_Position);
 	}
 	unsigned int id;
 	unsigned short x;
