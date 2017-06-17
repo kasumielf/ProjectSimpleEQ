@@ -8,7 +8,6 @@ using System;
 using System.Text;
 using Objects;
 using UnityEngine.EventSystems;
-
 public class WorldScene : MonoBehaviour {
     public Text myX;
     public Text myY;
@@ -284,25 +283,25 @@ public class WorldScene : MonoBehaviour {
             if (Input.GetKeyDown(KeyCode.W))
             {
                 myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, 1.0f);
-                movePacket.DIR = 2;
+                movePacket.DIR = 0;
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.D))
             {
                 myPlayerObject.transform.position += new Vector3(1.0f, 0.0f, 0.0f);
-                movePacket.DIR = 4;
+                movePacket.DIR = 2;
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.S))
             {
                 myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -1.0f);
-                movePacket.DIR = 6;
+                movePacket.DIR = 4;
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.A))
             {
                 myPlayerObject.transform.position += new Vector3(-1.0f, 0.0f, 0.0f);
-                movePacket.DIR = 8;
+                movePacket.DIR = 6;
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.Q))

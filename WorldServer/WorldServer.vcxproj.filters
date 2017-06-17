@@ -79,4 +79,7 @@
       <Filter>WorldServer\Objects\Object</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

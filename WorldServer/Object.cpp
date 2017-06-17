@@ -15,10 +15,10 @@ void Object::MoveByDirection(const char direction)
 {
 	switch (direction)
 	{
-	case 2:	y++; break;
-	case 4: x++; break;
-	case 6: y--; break;
-	case 8: x--; break;
+	case 0:	y++; break;
+	case 2: x++; break;
+	case 4: y--; break;
+	case 6: x--; break;
 	}
 
 	if (x > MAX_WORLD_WIDTH)

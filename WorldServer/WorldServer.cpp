@@ -7,6 +7,8 @@ WorldServer::WorldServer(const int capacity, const short port) : BaseServer(capa
 {
 	world = new World();
 
+	world->BlockCellInit(world->GetBlockDataFromBitmap("world.png"));
+
 	for (int i = 0; i < capacity; ++i)
 	{
 		players.push_back(nullptr);

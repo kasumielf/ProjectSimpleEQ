@@ -13,15 +13,22 @@ extern "C"
 #include <lualib.h>
 }
 #include <lua.hpp>
+#include <bitset>
+#include <array>
 
 #include "../Common/InnerRequestPacket.h"
 #include "../Common/InnerResponsePacket.h"
 #include "../Common/InnerNotifyPacket.h"
 
 #include "tinyxml2/tinyxml2.h"
+
+typedef std::bitset<8> Blocks;
+
 class NPCServer : public BaseServer
 {
 private:
+	Blocks block[MAX_WORLD_HEIGHT][MAX_WORLD_WIDTH];
+
 	int last_add_npc_id;
 
 	std::unordered_map<unsigned int, NonPlayer*> npcs;
@@ -54,6 +61,10 @@ public:
 	void NPCMoveProcess(NonPlayer* npc, Object* player);
 
 	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
+
+	std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > GetBlockDataFromBitmap(const char* filename);
+	void BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > data);
+
 };
 
 //static int SYSTEM_Set_RespawnPosition(lua_State * l);

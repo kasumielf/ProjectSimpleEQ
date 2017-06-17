@@ -1,5 +1,10 @@
 #include "NPCServer.h"
 #include <iostream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <png.h>
 
 static int SYSTEM_Set_RespawnPosition(lua_State * l)
 {
@@ -41,6 +46,7 @@ NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity
 NPCServer::~NPCServer()
 {
 }
+
 
 void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x, unsigned short y)
 {
@@ -405,6 +411,113 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
 {
 	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1;
+}
+
+void abort_(const char * s, ...)
+{
+	va_list args;
+	va_start(args, s);
+	vfprintf(stderr, s, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+	abort();
+}
+
+std::array<std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT> NPCServer::GetBlockDataFromBitmap(const char * filename)
+{
+	std::array<std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT> data;
+
+	int x, y;
+
+	int width, height;
+	png_byte color_type;
+	png_byte bit_depth;
+
+	png_structp png_ptr;
+	png_infop info_ptr;
+	int number_of_passes;
+	png_bytep * row_pointers;
+	char header[8];    // 8 is the maximum size that can be checked
+	png_const_bytep d = 0;
+
+	FILE *fp = fopen(filename, "rb");
+	if (!fp)
+		abort_("[read_png_file] File %s could not be opened for reading", filename);
+	fread(header, 1, 8, fp);
+	if (png_sig_cmp((png_const_bytep)header, 0, 8))
+		abort_("[read_png_file] File %s is not recognized as a PNG file", filename);
+
+
+	/* initialize stuff */
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+
+	if (!png_ptr)
+		abort_("[read_png_file] png_create_read_struct failed");
+
+	info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr)
+		abort_("[read_png_file] png_create_info_struct failed");
+
+	if (setjmp(png_jmpbuf(png_ptr)))
+		abort_("[read_png_file] Error during init_io");
+
+	png_init_io(png_ptr, fp);
+	png_set_sig_bytes(png_ptr, 8);
+
+	png_read_info(png_ptr, info_ptr);
+
+	width = png_get_image_width(png_ptr, info_ptr);
+	height = png_get_image_height(png_ptr, info_ptr);
+	color_type = png_get_color_type(png_ptr, info_ptr);
+	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+
+	number_of_passes = png_set_interlace_handling(png_ptr);
+	png_read_update_info(png_ptr, info_ptr);
+
+	/* read file */
+	if (setjmp(png_jmpbuf(png_ptr)))
+		abort_("[read_png_file] Error during read_image");
+
+	row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
+
+	for (y = 0; y<height; y++)
+		row_pointers[y] = (png_byte*)malloc(png_get_rowbytes(png_ptr, info_ptr));
+
+	png_read_image(png_ptr, row_pointers);
+
+	fclose(fp);
+
+	for (int i = 0; i < height; ++i)
+	{
+		for (int j = 0; j < width; ++j)
+		{
+			data[j][i] = row_pointers[i][j] == 0 ? true : false;
+		}
+	}
+	return data;
+}
+
+void NPCServer::BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > data)
+{
+	for (int y = 0; y < MAX_WORLD_HEIGHT; ++y)
+	{
+		for (int x = 0; x < MAX_WORLD_WIDTH; ++x)
+		{
+			int deg = 0;
+
+			for (int i = 0; i < 8; ++i)
+			{
+				int v_x = std::round(::sin(deg * 3.14 / 180));
+				int v_y = std::round(::cos(deg * 3.14 / 180));
+
+				if (x + v_x >= MAX_WORLD_WIDTH || x + v_x < 0)	v_x = 0;
+				if (y + v_y >= MAX_WORLD_HEIGHT || y + v_y < 0)	v_y = 0;
+
+				block[y + v_y][x + v_x][i] = (bool)data[y + v_y][x + v_x];
+				deg += 45;
+			}
+		}
+	}
 }
 
 
