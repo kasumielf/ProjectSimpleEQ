@@ -10,8 +10,6 @@ void AuthServer::ProcessPacket(const int id, unsigned char * packet)
 {
 	unsigned char packet_id = packet[0];
 
-	Logging(L"Packet ID Is %d", packet_id);
-
 	if (packet_id > 0)
 	{
 		switch (packet_id)
