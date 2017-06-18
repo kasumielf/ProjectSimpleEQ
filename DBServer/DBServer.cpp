@@ -19,7 +19,7 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 				wchar_t query[256];
 				swprintf(query, sizeof(query), L"EXEC USER_IS_USER_EXIST '%wS'", req->username);
 
-				ResultMapPtr result(m_db.Execute(query));
+				ResultMap* result = m_db.Execute(query);
 
 				Response_DB_To_Auth_IsUserExist res;
 				res.client_id = req->RESPONSE_ID;
@@ -30,8 +30,14 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 					res.user_uid = std::stoi(result->at(L"uuid"));
 					res.RESPONSE_ID = req->RESPONSE_ID;
 				}
+				else
+				{
+					std::wcout << "no find id " << req->username << std::endl;
+				}
 
 				Send(id, reinterpret_cast<unsigned char*>(&res));
+
+				delete result;
 
 				break;
 			}
@@ -45,7 +51,7 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 				ResultMapPtr result(m_db.Execute(query));
 				Response_DB_To_World_GetUserStatus res;
 				res.RESPONSE_ID = req->RESPONSE_ID;
-				res.user_uid = -1;
+				res.user_uid = 0;
 				res.client_id = req->client_id;
 
 				if (result->size() > 0)
@@ -70,8 +76,6 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 			{
 				Request_World_To_DB_UpdateUserStatus *req = reinterpret_cast<Request_World_To_DB_UpdateUserStatus*>(packet);
 				wchar_t query[256];
-
-				Logging(L"User %d DB Update", req->user_uid);
 
 				swprintf(query, sizeof(query), L"EXEC USER_UPDATE_USERINFO %d, %d, %d, %d, %d, %d, %d",
 					req->user_uid, req->level, req->exp, req->hp, req->max_hp, req->x, req->y);

@@ -33,7 +33,7 @@ namespace ServerPacket
     class BasePacket
     {
         public PacketId PACKET_ID;
-        public ushort SIZE; 
+        public byte SIZE; 
     }
 
     [Serializable]
@@ -43,7 +43,7 @@ namespace ServerPacket
         public LOGIN_OK()
         {
             PACKET_ID = PacketId.ID_LOGIN_OK;
-            SIZE = (ushort)Marshal.SizeOf(typeof(LOGIN_OK));
+            SIZE = (byte)Marshal.SizeOf(typeof(LOGIN_OK));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
@@ -65,7 +65,7 @@ namespace ServerPacket
         public LOGIN_FAIL()
         {
             PACKET_ID = PacketId.ID_LOGIN_FAIL;
-            SIZE = (ushort)Marshal.SizeOf(typeof(LOGIN_FAIL));
+            SIZE = (byte)Marshal.SizeOf(typeof(LOGIN_FAIL));
         }
     };
 
@@ -76,7 +76,7 @@ namespace ServerPacket
         public POSITION_INFO()
         {
             PACKET_ID = PacketId.ID_POSITION_INFO;
-            SIZE = (ushort)Marshal.SizeOf(typeof(POSITION_INFO));
+            SIZE = (byte)Marshal.SizeOf(typeof(POSITION_INFO));
         }
     };
 
@@ -87,7 +87,7 @@ namespace ServerPacket
         public Notify_Chat()
         {
             PACKET_ID = PacketId.ID_NOTIFY_CHAT;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Chat));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Chat));
         }
 
         public ushort speaker_id;
@@ -102,7 +102,7 @@ namespace ServerPacket
         public STAT_CHANGE()
         {
             PACKET_ID = PacketId.ID_STAT_CHANGE;
-            SIZE = (ushort)Marshal.SizeOf(typeof(STAT_CHANGE));
+            SIZE = (byte)Marshal.SizeOf(typeof(STAT_CHANGE));
         }
 
         public ushort HP;
@@ -117,7 +117,7 @@ namespace ServerPacket
         public REMOVE_OBJECT()
         {
             PACKET_ID = PacketId.ID_REMOVE_OBJECT;
-            SIZE = (ushort)Marshal.SizeOf(typeof(REMOVE_OBJECT));
+            SIZE = (byte)Marshal.SizeOf(typeof(REMOVE_OBJECT));
         }
        
         public uint ID;
@@ -131,7 +131,7 @@ namespace ServerPacket
         public ADD_OBJECT()
         {
             PACKET_ID = PacketId.ID_ADD_OBJECT;
-            SIZE = (ushort)Marshal.SizeOf(typeof(ADD_OBJECT));
+            SIZE = (byte)Marshal.SizeOf(typeof(ADD_OBJECT));
         }
 
         public uint ID;
@@ -149,7 +149,7 @@ namespace ServerPacket
         public CONNECT_SERVER()
         {
             PACKET_ID = PacketId.ID_CONNECT_SERVER;
-            SIZE = (ushort)Marshal.SizeOf(typeof(CONNECT_SERVER));
+            SIZE = (byte)Marshal.SizeOf(typeof(CONNECT_SERVER));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 15)]
@@ -165,7 +165,7 @@ namespace ServerPacket
         public Notifty_Player_Attack_NPC()
         {
             PACKET_ID = PacketId.ID_Notify_Player_Attack_NPC;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notifty_Player_Attack_NPC));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notifty_Player_Attack_NPC));
         }
 
         public uint npc_id;
@@ -179,7 +179,7 @@ namespace ServerPacket
         Notify_Player_Enter()
         {
             PACKET_ID = PacketId.ID_Notify_Player_Enter;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Enter));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_Enter));
         }
 
         public uint user_uid;
@@ -196,7 +196,7 @@ namespace ServerPacket
         Notify_Player_Move_Position()
         {
             PACKET_ID = PacketId.ID_Notify_Player_Move;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Move_Position));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_Move_Position));
         }
         public uint id;
         public ushort x;
@@ -210,7 +210,7 @@ namespace ServerPacket
         Notify_NPC_Attack_Player()
         {
             PACKET_ID = PacketId.ID_Notify_NPC_Attack_Player;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_NPC_Attack_Player));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_NPC_Attack_Player));
         }
 
         public uint npc_id;
@@ -224,7 +224,7 @@ namespace ServerPacket
         Notify_NPC_Damaged()
         {
             PACKET_ID = PacketId.ID_Notify_NPC_Damaged;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_NPC_Damaged));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_NPC_Damaged));
         }
 
         public uint npc_id;
@@ -239,7 +239,7 @@ namespace ServerPacket
         Notify_Player_Die()
         {
             PACKET_ID = PacketId.ID_Notify_Player_Die;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Die));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_Die));
         }
     };
 
@@ -250,7 +250,7 @@ namespace ServerPacket
         Notify_Player_Info()
         {
             PACKET_ID = PacketId.ID_Notify_Player_Info;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_Info));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_Info));
         }
 
         public ushort HP;
@@ -267,20 +267,20 @@ namespace ServerPacket
         Notify_Player_HPRegen()
         {
             PACKET_ID = PacketId.ID_Notify_Player_HPRegen;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_Player_HPRegen));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_HPRegen));
         }
 
         public ushort curr_hp;
     };
 
     [Serializable]
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
     class Notify_ChatMessage : BasePacket
     {
         Notify_ChatMessage()
         {
             PACKET_ID = PacketId.ID_Notify_ChatMessage;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_ChatMessage));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_ChatMessage));
         }
 
         public uint sender_id;
@@ -297,7 +297,7 @@ namespace ServerPacket
         Notify_NPC_Move_Position()
         {
             PACKET_ID = PacketId.ID_Notify_NPC_Move;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Notify_NPC_Move_Position));
+            SIZE = (byte)Marshal.SizeOf(typeof(Notify_NPC_Move_Position));
         }
         public uint id;
         public ushort x;

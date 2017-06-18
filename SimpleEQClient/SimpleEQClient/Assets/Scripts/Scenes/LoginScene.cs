@@ -26,7 +26,7 @@ public class LoginScene : MonoBehaviour {
                     _msg.Push(msg.GetParam(2));
                     MessageQueue.getInstance.Enqueue(_msg);
 
-                    nm.Disconnect();
+                    //nm.Disconnect();
                     SceneManager.LoadScene("WorldScene");
 
                     break;
@@ -36,7 +36,7 @@ public class LoginScene : MonoBehaviour {
 
     private void OnApplicationQuit()
     {
-        nm.Disconnect();
+        //nm.Disconnect();
     }
 
     private IEnumerator checkMessageQueue()
@@ -84,7 +84,11 @@ public class LoginScene : MonoBehaviour {
                     Debug.Log("LOGIN OK!");
                 }
             break;
-
+            case ServerPacket.PacketId.ID_LOGIN_FAIL:
+                {
+                    Debug.Log("LOGIN FAIL!");
+                }
+                break;
             case ServerPacket.PacketId.ID_CONNECT_SERVER:
                 {
                     ServerPacket.CONNECT_SERVER res = (ServerPacket.CONNECT_SERVER)Utility.ByteArrayToObject(data, typeof(ServerPacket.CONNECT_SERVER));

@@ -21,7 +21,7 @@ namespace ClientPacket
     class BasePacket
     {
         public PacketId PACKET_ID;
-        public ushort SIZE; 
+        public byte SIZE; 
     }
 
     [Serializable]
@@ -31,7 +31,7 @@ namespace ClientPacket
         public LOGIN()
         {
             PACKET_ID = PacketId.ID_LOGIN;
-            SIZE = (ushort)Marshal.SizeOf(typeof(LOGIN));
+            SIZE = (byte)Marshal.SizeOf(typeof(LOGIN));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
@@ -45,7 +45,7 @@ namespace ClientPacket
         public MOVE()
         {
             PACKET_ID = PacketId.ID_MOVE;
-            SIZE = (ushort)Marshal.SizeOf(typeof(MOVE));
+            SIZE = (byte)Marshal.SizeOf(typeof(MOVE));
         }
 
         public byte DIR;
@@ -58,7 +58,7 @@ namespace ClientPacket
         public ATTACK()
         {
             PACKET_ID = PacketId.ID_ATTACK;
-            SIZE = (ushort)Marshal.SizeOf(typeof(ATTACK));
+            SIZE = (byte)Marshal.SizeOf(typeof(ATTACK));
         }
     };
 
@@ -69,7 +69,7 @@ namespace ClientPacket
         public CHAT()
         {
             PACKET_ID = PacketId.ID_CHAT;
-            SIZE = (ushort)Marshal.SizeOf(typeof(CHAT));
+            SIZE = (byte)Marshal.SizeOf(typeof(CHAT));
         }
 
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 100)]
@@ -83,7 +83,7 @@ namespace ClientPacket
         public LOGOUT()
         {
             PACKET_ID = PacketId.ID_LOGOUT;
-            SIZE = (ushort)Marshal.SizeOf(typeof(LOGOUT));
+            SIZE = (byte)Marshal.SizeOf(typeof(LOGOUT));
         }
 
         public uint user_id;
@@ -96,7 +96,7 @@ namespace ClientPacket
         public Request_Enter_GameWorld()
         {
             PACKET_ID = PacketId.ID_Request_Enter_GameWorld;
-            SIZE = (ushort)Marshal.SizeOf(typeof(Request_Enter_GameWorld));
+            SIZE = (byte)Marshal.SizeOf(typeof(Request_Enter_GameWorld));
         }
 
         public uint user_uid;

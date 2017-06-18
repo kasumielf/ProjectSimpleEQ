@@ -35,7 +35,7 @@ public class WorldScene : MonoBehaviour {
     MOVE movePacket = new MOVE();
 
     byte mydir;
-    byte rotation = 1;
+    byte rotation = 0;
 
     public NetworkManager nm;
 
@@ -227,7 +227,7 @@ public class WorldScene : MonoBehaviour {
     private void InputBattleTextLine(String text)
     {
         damageLog.text += (text + System.Environment.NewLine);
-        if (line_count++ > 5)
+        if (line_count++ > 10)
         {
             int index = damageLog.text.IndexOf(System.Environment.NewLine);
             string newtxt = damageLog.text.Substring(index + System.Environment.NewLine.Length);
@@ -238,7 +238,7 @@ public class WorldScene : MonoBehaviour {
     private void InputChatTextLine(String text)
     {
         chatLog.text += (text + System.Environment.NewLine);
-        if (line_count++ > 5)
+        if (line_count++ > 10)
         {
             int index = chatLog.text.IndexOf(System.Environment.NewLine);
             string newtxt = chatLog.text.Substring(index + System.Environment.NewLine.Length);
@@ -282,40 +282,58 @@ public class WorldScene : MonoBehaviour {
         {
             if (Input.GetKeyDown(KeyCode.W))
             {
-                myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, 1.0f);
-                movePacket.DIR = 0;
+                byte d = (byte)((rotation) * 2);
+
+                if (d > 6)
+                    d -= 6;
+                movePacket.DIR = d;
+
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.D))
             {
-                myPlayerObject.transform.position += new Vector3(1.0f, 0.0f, 0.0f);
-                movePacket.DIR = 2;
+                byte d = (byte)((rotation+1) * 2);
+                if (d > 6)
+                    d -= 6;
+
+                movePacket.DIR = d;
+
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.S))
             {
-                myPlayerObject.transform.position += new Vector3(0.0f, 0.0f, -1.0f);
-                movePacket.DIR = 4;
+                byte d = (byte)((rotation+2) * 2);
+                if (d > 6)
+                    d -= 6;
+
+                movePacket.DIR = d;
+
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.A))
             {
-                myPlayerObject.transform.position += new Vector3(-1.0f, 0.0f, 0.0f);
-                movePacket.DIR = 6;
+                byte d = (byte)((rotation+3) * 2);
+                if (d > 6)
+                    d -= 6;
+
+                movePacket.DIR = d;
+
                 nm.Send(Utility.ToByteArray(movePacket));
             }
             else if (Input.GetKeyDown(KeyCode.Q))
             {
-                if (--rotation <= 0)
-                    rotation = 1;
-                
+                if (--rotation >= 255)
+                    rotation = (byte)3;
+
+                Debug.Log(rotation);
                 myPlayerObject.transform.Rotate(Vector3.up, -90);
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
-                if (++rotation > 4)
-                    rotation = 1;
+                if (++rotation > 3)
+                    rotation = (byte)0;
 
+                Debug.Log(rotation);
                 myPlayerObject.transform.Rotate(Vector3.up, 90);
             }
             else if (Input.GetKeyDown(KeyCode.F))
@@ -539,6 +557,11 @@ public class WorldScene : MonoBehaviour {
                     msg.Push(res.sender_name);
                     msg.Push(res.message);
                     MessageQueue.getInstance.Enqueue(msg);
+                    break;
+                }
+            default:
+                {
+                    Debug.Log("Packet " + id + "sent");
                     break;
                 }
         }

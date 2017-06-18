@@ -189,6 +189,9 @@ void World::MoveObject(Object * obj, const char direction)
 {
 	// 0 : UP 2: RIGHT 4 : DOWN : 6 : LEFT
 
+	if (direction < 0 || direction > 6)
+		return;
+
 	short from_x = obj->GetX(), from_y = obj->GetY();
 	
 	if (block[from_y][from_x][direction] == false)
@@ -215,7 +218,7 @@ void World::SetSector(Object* obj, unsigned short x, unsigned short y)
 			sector[obj->getCurrSectorY()][obj->getCurrSectorX()].RemovePlayer(obj->GetId());
 
 		sector[y / MAX_SECTOR_HEIGHT][x / MAX_SECTOR_WIDTH].AddPlayer(obj->GetId(), obj);
-		obj->setCurSectorPos(x / MAX_SECTOR_HEIGHT, y / MAX_SECTOR_WIDTH);
+		obj->setCurSectorPos(x / MAX_SECTOR_WIDTH, y / MAX_SECTOR_HEIGHT);
 	}
 
 }

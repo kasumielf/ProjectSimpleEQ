@@ -5,6 +5,7 @@
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <string>
 #include <WinSock2.h>
 
 #include "../GSLibrary/IOCPOpType.h"
@@ -15,6 +16,14 @@
 HANDLE g_hiocp;
 
 std::chrono::high_resolution_clock::time_point last_connect_time;
+
+void error_display(char* msg, int err_no)
+{
+	WCHAR* lpMsgBuf;
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, err_no, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL);
+	std::wcout << msg << L"[Error] " << lpMsgBuf << std::endl;
+	LocalFree(lpMsgBuf);
+}
 
 struct OverlappedEx
 {
@@ -35,34 +44,42 @@ public:
 	int y;
 	bool use;
 	int sendBytes;
+	int recvBytes;
+	int received;
 	std::chrono::high_resolution_clock::time_point last_move_time;
 	bool connect;
 	bool standby = false;
-	OverlappedEx recv_over;
 	unsigned char packet_buf[MAX_PACKET_BUFFER_SIZE];
-	int prev_packet_data;
-	int curr_packet_size;
 };
 
-std::vector<const wchar_t*> test_account;
+std::vector<std::wstring> test_account;
 std::vector<CLIENT> clients;
 std::vector<std::thread*> worker_threads;
 std::thread move_thread;
 
+bool ready = false;
 
 bool Send(short id, BasePacket* packet)
 {
 	int ptype = packet->PACKET_ID;
 	int psize = packet->SIZE;
 	OverlappedEx *over = new OverlappedEx;
-
+	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
 	over->optype = IOCPOpType::OpSend;
 	memcpy(over->iocp_buffer, packet, psize);
-	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
 	over->wsaBuf.buf = reinterpret_cast<CHAR *>(over->iocp_buffer);
 	over->wsaBuf.len = psize;
 
-	int ret = WSASend(clients[id].socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
+	int retval = WSASend(clients[id].socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
+
+	if (retval != 0)
+	{
+		error_display("send error", WSAGetLastError());
+		return false;
+	}
+	else
+	{
+	}
 
 	return true;
 }
@@ -70,17 +87,16 @@ bool Send(short id, BasePacket* packet)
 void ProcessPacket(const int id, unsigned char* packet)
 {
 	unsigned char packet_id = packet[0];
-	// 만약 Login 요청에 대한 Res가 와서 정상 처리 되면 client[id]에 대해
-	// Reconnect를 해서 월드 서버로 연결시킨다.
-	// World 서버로 연결한 뒤, EnterWorld에 대한 Res가 왔을 때, 해당 클라를
-	// Stand by 상태로 만든다.
-	// MoveThread는 일단 시작은 시켜 놓고, 클라이언트에 대해 Standby가 true인
-	// 클라이언트만 이동 패킷을 날린다.
 
 	if (packet_id > 0)
 	{
 		switch (packet_id)
 		{
+			case ID_LOGIN_FAIL:
+			{
+				std::cout << "Login Fail" << std::endl;
+				break;
+			}
 			case ID_CONNECT_SERVER:
 			{
 				CONNECT_SERVER *res = reinterpret_cast<CONNECT_SERVER*>(packet);
@@ -88,9 +104,11 @@ void ProcessPacket(const int id, unsigned char* packet)
 				clients[id].connect = false;
 				closesocket(clients[id].socket);
 
+				clients[id].socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
 				char ip[15];
 				size_t sz;
-				wcstombs_s(&sz, ip, res->ip, 15);
+				wcstombs_s(&sz, ip, 15, res->ip, _TRUNCATE);
 				SOCKADDR_IN ServerAddr;
 				ZeroMemory(&ServerAddr, sizeof(SOCKADDR_IN));
 				ServerAddr.sin_family = AF_INET;
@@ -99,10 +117,22 @@ void ProcessPacket(const int id, unsigned char* packet)
 
 				int retval = WSAConnect(clients[id].socket, (sockaddr *)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 
-				if (retval == 0)
+				while (retval != 0)
 				{
-					clients[id].connect = true;
+					Sleep(1000);
+
+					if (retval != 0)
+					{
+						error_display("reconnect error", WSAGetLastError());
+					}
+
+					retval = WSAConnect(clients[id].socket, (sockaddr *)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 				}
+
+				DWORD recv_flag = 0;
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(clients[id].socket), g_hiocp, id, 0);
+				WSARecv(clients[id].socket, &clients[id].overlapped.wsaBuf, 1, NULL, &recv_flag, &clients[id].overlapped.wsaOverlapped, NULL);
+				clients[id].connect = true;
 
 				Request_Enter_GameWorld req;
 
@@ -126,6 +156,16 @@ void ProcessPacket(const int id, unsigned char* packet)
 				clients[id].x = res->X_POS;
 				clients[id].y = res->Y_POS;
 				clients[id].standby = true;
+
+				break;
+			}
+			case ID_Notify_Player_Move:
+			{
+				std::cout << "Player move" << std::endl;
+				break;
+			}
+			default:
+			{
 				break;
 			}
 		}
@@ -174,9 +214,9 @@ void WorkerThread()
 	while (true)
 	{
 		DWORD io_size;
-		unsigned long long id;
+		DWORD id;
 		OverlappedEx *over;
-		BOOL ret = GetQueuedCompletionStatus(g_hiocp, &io_size, &id, reinterpret_cast<LPWSAOVERLAPPED *>(&over), INFINITE);
+		BOOL ret = GetQueuedCompletionStatus(g_hiocp, &io_size, (PULONG_PTR)&id, reinterpret_cast<LPOVERLAPPED *>(&over), INFINITE);
 
 		if (io_size == 0)
 		{
@@ -187,21 +227,20 @@ void WorkerThread()
 		{
 			if (io_size != over->wsaBuf.len)
 			{
-				closesocket(clients[id].socket);
-				clients[id].connect = false;
+				Disconnect(id);
 			}
 			delete over;
 		}
 		else if (over->optype == IOCPOpType::OpRecv)
 		{
 			unsigned char* buf = clients[id].overlapped.iocp_buffer;
-			unsigned short curr_packet_size = clients[id].curr_packet_size;
-			unsigned short prev_packet_size = clients[id].prev_packet_data;
+			unsigned char curr_packet_size = clients[id].recvBytes;
+			unsigned char prev_packet_size = clients[id].received;
 
 			while (io_size > 0)
 			{
 				if (curr_packet_size == 0)
-					curr_packet_size = (unsigned short)buf[1];
+					curr_packet_size = buf[1];
 
 				//unsigned int required = cptr->overlapped.recvBytes - cptr->overlapped.received;
 
@@ -221,19 +260,23 @@ void WorkerThread()
 				else
 				{
 					memcpy(clients[id].packet_buf + prev_packet_size, buf, io_size);
-					prev_packet_size += (unsigned short)io_size;
+					prev_packet_size += (unsigned char)io_size;
 					io_size = 0;
 
 					break;
 				}
 			}
 
-			clients[id].curr_packet_size = curr_packet_size;
-			clients[id].prev_packet_data = prev_packet_size;
+			clients[id].recvBytes = curr_packet_size;
+			clients[id].received = prev_packet_size;
+
 			DWORD flags = 0;
 			int retval = WSARecv(clients[id].socket, &clients[id].overlapped.wsaBuf, 1, NULL, &flags, &clients[id].overlapped.wsaOverlapped, NULL);
 
-
+			if (retval != 0)
+			{
+				error_display("recv error", WSAGetLastError());
+			}
 		}
 		else
 		{
@@ -243,40 +286,15 @@ void WorkerThread()
 	}
 }
 
+
 int main()
 {
-	test_account.push_back(L"test0001");
-	test_account.push_back(L"test0002");
-	test_account.push_back(L"test0003");
-	test_account.push_back(L"test0004");
-	test_account.push_back(L"test0005");
-	test_account.push_back(L"test0006");
-	test_account.push_back(L"test0007");
-	test_account.push_back(L"test0008");
-	test_account.push_back(L"test0009");
-	test_account.push_back(L"test0011");
-	test_account.push_back(L"test0011");
-	test_account.push_back(L"test0012");
-	test_account.push_back(L"test0013");
-	test_account.push_back(L"test0014");
-	test_account.push_back(L"test0015");
-	test_account.push_back(L"test0016");
-	test_account.push_back(L"test0017");
-	test_account.push_back(L"test0018");
-	test_account.push_back(L"test0019");
-	test_account.push_back(L"test0020");
-	test_account.push_back(L"test0021");
-	test_account.push_back(L"test0022");
-	test_account.push_back(L"test0023");
-	test_account.push_back(L"test0024");
-	test_account.push_back(L"test0025");
-	test_account.push_back(L"test0026");
-	test_account.push_back(L"test0027");
-	test_account.push_back(L"test0028");
-	test_account.push_back(L"test0029");
-	test_account.push_back(L"test0030");
-	test_account.push_back(L"test0031");
-	test_account.push_back(L"test0032");
+	for (int i = 1010; i < 6010; ++i)
+	{
+		std::wstring name = L"test" + std::to_wstring(i);
+
+		test_account.push_back(name);
+	}
 
 	int count = 0;
 	std::cout << "Input Test Client Amount : " << std::endl;
@@ -293,55 +311,68 @@ int main()
 	WSAStartup(MAKEWORD(2, 2), &wsadata);
 
 	g_hiocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, NULL, 0);
+
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+
+	for (int i = 0; i < (int)si.dwNumberOfProcessors; ++i)
+	{
+		worker_threads.push_back(new std::thread{ WorkerThread });
+	}
+
 	for (int i = 0; i < count; ++i)
 	{
 		clients[i].socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 
 		SOCKADDR_IN ServerAddr;
-		ZeroMemory(&ServerAddr, sizeof(SOCKADDR_IN));
+		ZeroMemory(&ServerAddr, sizeof(ServerAddr));
 		ServerAddr.sin_family = AF_INET;
 		ServerAddr.sin_port = htons(4000);
 		ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
+		clients[i].use = true;
+		clients[i].received = 0;
+		clients[i].recvBytes = 0;
+		ZeroMemory(&clients[i].overlapped, sizeof(clients[i].overlapped));
+		clients[i].overlapped.optype = IOCPOpType::OpRecv;
+		clients[i].overlapped.wsaBuf.buf = reinterpret_cast<CHAR *>(clients[i].overlapped.iocp_buffer);
+		clients[i].overlapped.wsaBuf.len = sizeof(clients[i].overlapped.iocp_buffer);
+
+		CreateIoCompletionPort(reinterpret_cast<HANDLE>(clients[i].socket), g_hiocp, i, 0);
+
 		int Result = WSAConnect(clients[i].socket, (sockaddr *)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 
-		clients[i].curr_packet_size = 0;
-		clients[i].prev_packet_data = 0;
-		ZeroMemory(&clients[i].recv_over, sizeof(clients[i].recv_over));
-		clients[i].recv_over.optype = IOCPOpType::OpRecv;
-		clients[i].recv_over.wsaBuf.buf = reinterpret_cast<CHAR *>(clients[i].recv_over.iocp_buffer);
-		clients[i].recv_over.wsaBuf.len = sizeof(clients[i].recv_over.iocp_buffer);
-
 		DWORD recv_flag = 0;
-		CreateIoCompletionPort(reinterpret_cast<HANDLE>(clients[i].socket), g_hiocp, i, 0);
-		WSARecv(clients[i].socket, &clients[i].recv_over.wsaBuf, 1, NULL, &recv_flag, &clients[i].recv_over.wsaOverlapped, NULL);
+
+		int retval = WSARecv(clients[i].socket, &clients[i].overlapped.wsaBuf, 1, NULL, &recv_flag, &clients[i].overlapped.wsaOverlapped, NULL);
+
+		if (retval != 0)
+		{
+			error_display("recv error", WSAGetLastError());
+		}
+
 		clients[i].connect = true;
 	}
 
-	Sleep(3000);
-	for (int i = 0; i < 4; ++i)
-		worker_threads.push_back(new std::thread{ WorkerThread });
-
-	int size = clients.size();
-
-	for (int i = 0; i < size; ++i)
+	for (int i = 0; i < count; ++i)
 	{
-		const wchar_t* name = test_account[i];
-		LOGIN login;
-		wcscpy_s(login.ID_STR, name);
-		Send(i, &login);
-		std::cout << "Login Start " << name << std::endl;
-		Sleep(100);
+		if (clients[i].connect)
+		{
+			LOGIN login;
+			wcscpy_s(login.ID_STR, test_account[i].c_str());
+			Send(i, &login);
+			Sleep(10);
+		}
 	}
 
 	move_thread = std::thread{ MoveThread };
 
-	//test_thread.join();
+	while (true);
 
-	for (auto pth : worker_threads)
+	for (int i = 0; i < count; ++i)
 	{
-		pth->join();
-		delete pth;
+		if(clients[i].connect == true)
+			closesocket(clients[i].socket);
 	}
 }
 

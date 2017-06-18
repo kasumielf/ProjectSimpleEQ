@@ -48,6 +48,8 @@ bool DBManager::Disconnect()
 
 ResultMap* DBManager::Execute(const wchar_t* query)
 {
+	SQLHSTMT hStmt;
+
 	SQLRETURN ret;
 	ResultMap* result = new ResultMap();
 	ret = SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
@@ -103,15 +105,18 @@ ResultMap* DBManager::Execute(const wchar_t* query)
 		}
 	}
 
+	SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
 	return result;
 }
 
 void DBManager::ExecuteDirect(const wchar_t * query)
 {
+	SQLHSTMT hStmt;
 	SQLRETURN ret;
 	ret = SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
 	ret = SQLExecDirectW(hStmt, (SQLWCHAR *)query, SQL_NTS);
 
+	SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
 	HandleDiagnosticRecord(hDbc, SQL_HANDLE_DBC, ret);
 }
 

@@ -4,6 +4,6 @@
 struct BasePacket
 {
 	unsigned char PACKET_ID;
-	unsigned short SIZE;
+	unsigned char SIZE;
 };
 #pragma pack(pop)

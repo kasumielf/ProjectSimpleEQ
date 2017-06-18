@@ -63,13 +63,6 @@ void BaseServer::Start()
 	m_timer_thread = std::thread{ TimerThreadFunc, this };
 
 	Logging(L"Server Start");
-
-	//m_accept_thread.join();
-	
-//	for (auto th : m_worker_thread) {
-	//	th->join();
-		//delete th;
-	//}
 }
 
 void BaseServer::Stop()
@@ -198,17 +191,15 @@ void BaseServer::Connect(const char * server_name, const char * ip, const short 
 
 void BaseServer::CloseSocket(const int id)
 {
+	Lock();
 	m_sessions[id]->id = -1;
 	m_sessions[id]->use = false;
 
-	if (m_sessions[id]->sendBytes > 0)
-	{
-		// 남은 데이터 있으면 전송하기
-	}
-
 	closesocket(m_sessions[id]->socket);
 
-	m_sessions.erase(id);
+	if(m_sessions.count(id) > 0)
+		m_sessions.erase(id);
+	Unlock();
 }
 
 void BaseServer::Send(const int id, unsigned char * packet)
@@ -217,12 +208,14 @@ void BaseServer::Send(const int id, unsigned char * packet)
 	OverlappedEx *over = new OverlappedEx;
 	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
 	over->optype = IOCPOpType::OpSend;
+	over->caller_id = id;
 	memcpy(over->iocp_buffer, packet, psize);
 	over->wsaBuf.buf = reinterpret_cast<CHAR *>(over->iocp_buffer);
 	over->wsaBuf.len = psize;
 
 	DWORD send_flag = 0;
-	int ret = WSASend(m_sessions[id]->socket, &over->wsaBuf, 1, NULL, send_flag, &over->wsaOverlapped, NULL);
+	DWORD send_byte;
+	int ret = WSASend(m_sessions[id]->socket, &over->wsaBuf, 1, &send_byte, send_flag, &over->wsaOverlapped, NULL);
 
 	if (ret != 0)
 	{
@@ -238,15 +231,15 @@ void BaseServer::SendToInternal(std::string name, unsigned char * packet)
 	unsigned short psize = (unsigned short)packet[1];
 
 	OverlappedEx *over = new OverlappedEx;
-
-	over->optype = IOCPOpType::OpSend;
-	memcpy(over->iocp_buffer, packet, psize);
 	ZeroMemory(&over->wsaOverlapped, sizeof(over->wsaOverlapped));
-
+	over->optype = IOCPOpType::OpSend;
+	over->caller_id = internal_session_index;
+	memcpy(over->iocp_buffer, packet, psize);
 	over->wsaBuf.buf = reinterpret_cast<CHAR *>(over->iocp_buffer);
 	over->wsaBuf.len = psize;
 
-	int ret = WSASend(m_sessions[internal_session_index]->socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
+	DWORD send_flag = 0;
+	int ret = WSASend(m_sessions[internal_session_index]->socket, &over->wsaBuf, 1, NULL, send_flag, &over->wsaOverlapped, NULL);
 
 	if (ret != 0)
 	{
@@ -305,8 +298,6 @@ void BaseServer::AcceptThreadFunc(BaseServer* self)
 			continue;
 		}
 
-		self->Logging(L"Client Accept from %S:%d", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
-
 		unsigned int newId = -1;
 
 		if (self->m_sessions.size() >= self->m_capacity) {
@@ -358,7 +349,7 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 		DWORD id;
 		OverlappedEx *over;
 
-		int retval = GetQueuedCompletionStatus(self->m_iocp_handle, &io_size, (PULONG_PTR)&id, (LPOVERLAPPED*)&over, INFINITE);
+		int retval = GetQueuedCompletionStatus(self->m_iocp_handle, &io_size, (PULONG_PTR)&id, reinterpret_cast<LPOVERLAPPED*>(&over), INFINITE);
 
 		if (io_size == 0)
 		{
@@ -372,8 +363,6 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 			case IOCPOpType::OpSend:
 			{
 				if (io_size != over->wsaBuf.len) {
-					self->Logging(L"Send Incomplete Error!\n");
-
 					self->CloseSocket(id);
 				}
 				delete over;
@@ -383,14 +372,16 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 			case IOCPOpType::OpRecv:
 			{
 				unsigned char* buf = self->m_sessions[id]->overlapped.iocp_buffer;
-				unsigned short curr_packet_size = self->m_sessions[id]->recvBytes;
-				unsigned short prev_packet_size = self->m_sessions[id]->received;
+				unsigned char curr_packet_size = self->m_sessions[id]->recvBytes;
+				unsigned char prev_packet_size = self->m_sessions[id]->received;
 
 				while (io_size > 0)
 				{
 					if (curr_packet_size == 0)
-						curr_packet_size = (unsigned short)buf[1];
-
+					{
+						curr_packet_size = buf[1];
+					}
+						
 					//unsigned int required = cptr->overlapped.recvBytes - cptr->overlapped.received;
 
 					if (io_size + prev_packet_size >= curr_packet_size)
@@ -409,7 +400,7 @@ void BaseServer::WorkerThreadFunc(BaseServer* self)
 					else
 					{
 						memcpy(self->m_sessions[id]->packet_buffer + prev_packet_size, buf, io_size);
-						prev_packet_size += (unsigned short)io_size;
+						prev_packet_size += (unsigned char)io_size;
 						io_size = 0;
 
 						break;
@@ -487,7 +478,7 @@ void BaseServer::ErrorDisplay(char *msg, int err_no)
 		NULL, err_no,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		(LPTSTR)&lpMsgBuf, 0, NULL);
-	Logging(L"%s\t%ws", msg, lpMsgBuf);
+	Logging(L"%S\t%ws", msg, lpMsgBuf);
 	LocalFree(lpMsgBuf);
 }
 

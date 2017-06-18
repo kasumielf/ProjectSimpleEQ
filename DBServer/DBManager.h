@@ -26,7 +26,6 @@ class DBManager
 private:
 	SQLHENV hEnv;
 	SQLHDBC hDbc;
-	SQLHSTMT hStmt;
 
 	void HandleDiagnosticRecord(SQLHANDLE hHandle, SQLSMALLINT hType, RETCODE RetCode);
 
