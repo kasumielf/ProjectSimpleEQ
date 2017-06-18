@@ -21,13 +21,13 @@ void Object::MoveByDirection(const char direction)
 	case 6: x--; break;
 	}
 
-	if (x > MAX_WORLD_WIDTH)
+	if (x >= MAX_WORLD_WIDTH)
 		x = MAX_WORLD_WIDTH - 1;
 
 	if (x < 0)
 		x = 0;
 
-	if (y > MAX_WORLD_HEIGHT)
+	if (y >= MAX_WORLD_HEIGHT)
 		y = MAX_WORLD_HEIGHT - 1;
 
 	if (y < 0)

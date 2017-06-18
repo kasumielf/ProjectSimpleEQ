@@ -34,7 +34,7 @@ public:
 	void PlayerUpdate(unsigned int id, WorldServer* self);
 	void PlayerDBSave(unsigned int id, WorldServer * self);
 
-	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
+	bool IsClosed(short from_x, short from_y, short to_x, short to_y, int range);
 	Status& GetLevelData(unsigned int level) { return level_data[level]; }
 
 	void InitStatusTable();

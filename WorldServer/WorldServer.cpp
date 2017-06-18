@@ -220,9 +220,9 @@ void WorldServer::PlayerUpdate(unsigned int id, WorldServer * self)
 	self->PushTimerEvent(1000, player_update_event);
 }
 
-bool WorldServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
+bool WorldServer::IsClosed(short from_x, short from_y, short to_x, short to_y, int range)
 {
-	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= MAX_SIGHT_RANGE * MAX_SIGHT_RANGE;
+	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= range * range;
 }
 
 void WorldServer::InitStatusTable()
@@ -269,66 +269,35 @@ void WorldServer::MoveObject(unsigned int sock_id, Player * p)
 	short sector_x = p->getCurrSectorX();
 	short sector_y = p->getCurrSectorY();
 
-	int start_i = 0, start_j = 0;
-
-	if (my_x % MAX_SECTOR_WIDTH < MAX_SECTOR_WIDTH / 2)
-		start_j = -1;
-
-
-	if (my_y % MAX_SECTOR_HEIGHT < MAX_SECTOR_HEIGHT / 2)
-		start_i = -1;
-
-	int dest_i = 1 + start_i, dest_j = 1 + start_j;
-
 	std::unordered_map<unsigned int, ObjectType> new_view_list;
 	std::unordered_map<unsigned int, ObjectType> del_view_list;
 
-	for (int i = start_i; i <= dest_i; i++)
+
+	auto iter_b = world->GetPlayerBegin(sector_x, sector_y);
+	auto iter_e = world->GetPlayerEnd(sector_x, sector_y);
+
+	for (; iter_b != iter_e; ++iter_b)
 	{
-		for (int j = start_j; j <= dest_j; j++)
+		if ((*iter_b).second != nullptr && (*iter_b).second->GetId())
 		{
-			int sec_x = sector_x + j;
-			int sec_y = sector_y + i;
+			short x = (*iter_b).second->GetX();
+			short y = (*iter_b).second->GetY();
 
-			if (sec_x < 0)
-				sec_x = 0;
-
-			if (sec_y < 0)
-				sec_y = 0;
-
-			if (sec_x >= MAX_SECTOR_WIDTH)
-				sec_x = MAX_SECTOR_WIDTH - 1;
-
-			if (sec_y >= MAX_SECTOR_HEIGHT)
-				sec_y = MAX_SECTOR_HEIGHT - 1;
-
-			auto iter_b = world->GetPlayerBegin(sec_x, sec_y);
-			auto iter_e = world->GetPlayerEnd(sec_x, sec_y);
-
-			for (; iter_b != iter_e; ++iter_b)
+			if (IsClosed(my_x, my_y, x, y, MAX_SIGHT_RANGE))
 			{
-				if ((*iter_b).second != nullptr && (*iter_b).second->GetId())
+				OverlappedEx overlapped;
+				overlapped.optype = IOCPOpType::OpPlayerMove;
+
+				new_view_list[(*iter_b).second->GetId()] = (*iter_b).second->GetType();
+
+				if ((*iter_b).second->GetType() != ObjectType::NonPlayer)
 				{
-					short x = (*iter_b).second->GetX();
-					short y = (*iter_b).second->GetY();
-
-					if (IsClosed(my_x, my_y, x, y))
-					{
-						OverlappedEx overlapped;
-						overlapped.optype = IOCPOpType::OpPlayerMove;
-
-						new_view_list[(*iter_b).second->GetId()] = (*iter_b).second->GetType();
-
-						if ((*iter_b).second->GetType() != ObjectType::NonPlayer)
-						{
-							Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&notify));
-						}
-					}
-					else
-					{
-						del_view_list.insert(std::make_pair((*iter_b).second->GetId(), (*iter_b).second->GetType()));
-					}
+					Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&notify));
 				}
+			}
+			else
+			{
+				del_view_list.insert(std::make_pair((*iter_b).second->GetId(), (*iter_b).second->GetType()));
 			}
 		}
 	}
@@ -478,9 +447,12 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 		res.Y_POS = p->GetY();
 		wcscpy_s(res.username, p->GetName());
 
-		socketIds[p->GetId()] = id;
-
 		players[id] = p;
+		p->SetSocketId(id);
+
+		Lock();
+		socketIds.insert({p->GetId(), id});
+		Unlock();
 
 		Notify_World_To_NPC_PlayerEntered enter_packet;
 		enter_packet.player_id = p->GetId();
@@ -522,9 +494,13 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 
 		auto iter_b = world->GetPlayerBegin(p->getCurrSectorX(), p->getCurrSectorY());
 		auto iter_e = world->GetPlayerEnd(p->getCurrSectorX(), p->getCurrSectorY());
+		unsigned char* pk = reinterpret_cast<unsigned char*>(&notify);
 
 		for (; iter_b != iter_e; ++iter_b)
 		{
+			if ((*iter_b).second == nullptr)
+				continue;
+
 			short target_id = (*iter_b).second->GetId();
 			ObjectType target_type = (*iter_b).second->GetType();
 
@@ -533,12 +509,16 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 				short x = (*iter_b).second->GetX();
 				short y = (*iter_b).second->GetY();
 
-				if (IsClosed(my_x, my_y, x, y))
+				if (IsClosed(my_x, my_y, x, y, MAX_SIGHT_RANGE))
 				{
 					if (target_type != ObjectType::NonPlayer && target_id != p->GetId())
-						Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&notify));
+					{
+						Send(socketIds[target_id], pk);
+					}
 
+					Lock();
 					p->AddViewList(target_id, target_type);
+					Unlock();
 
 					ADD_OBJECT addNotify;
 
@@ -559,7 +539,12 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 void WorldServer::Move(const int id, MOVE * req)
 {
 	Player* myPlayer = players[id];
-	if (world->MoveObject(myPlayer, req->DIR) == true)
+	
+	Lock();
+	bool res = world->MoveObject(myPlayer, req->DIR);
+	Unlock();
+
+	if (res == true)
 	{
 		MoveObject(id, myPlayer);
 		Notify_World_To_NPC_PlayerMove not;
@@ -569,7 +554,6 @@ void WorldServer::Move(const int id, MOVE * req)
 		not.y = myPlayer->GetY();
 
 		SendToInternal("NPC", reinterpret_cast<unsigned char*>(&not));
-
 	}
 }
 
@@ -784,6 +768,8 @@ void WorldServer::SendChatMessage(const int id, CHAT * req)
 	if (p == nullptr)
 		return;
 
+	short my_x = p->GetX();
+	short my_y = p->GetY();
 	short sec_x = p->getCurrSectorX();
 	short sec_y = p->getCurrSectorY();
 
@@ -801,21 +787,30 @@ void WorldServer::SendChatMessage(const int id, CHAT * req)
 
 	for (; iter_b != iter_e; ++iter_b)
 	{
-		unsigned int obj_id = (*iter_b).second->GetId();
+		if ((*iter_b).second != nullptr)
+		{
+			unsigned int obj_id = (*iter_b).second->GetId();
 
-		if ((*iter_b).second->GetType() == ObjectType::Player && obj_id != id)
-		{
-			notMsg.sender_id = p->GetId();
-			Send(socketIds[obj_id], reinterpret_cast<unsigned char*>(&notMsg));
-		}
-		else if ((*iter_b).second->GetType() == ObjectType::NonPlayer)
-		{
-			msg.target_id = (*iter_b).second->GetId();
-			SendToInternal("NPC", reinterpret_cast<unsigned char*>(&msg));
-		}
-		else
-		{
-			continue;
+			if ((*iter_b).second->GetType() == ObjectType::Player && obj_id != id)
+			{
+				notMsg.sender_id = p->GetId();
+				Send(socketIds[obj_id], reinterpret_cast<unsigned char*>(&notMsg));
+			}
+			else if ((*iter_b).second->GetType() == ObjectType::NonPlayer)
+			{
+				short x = (*iter_b).second->GetX();
+				short y = (*iter_b).second->GetY();
+
+				if (IsClosed(my_x, my_y, x, y, 2))
+				{
+					msg.target_id = (*iter_b).second->GetId();
+					SendToInternal("NPC", reinterpret_cast<unsigned char*>(&msg));
+				}
+			}
+			else
+			{
+				continue;
+			}
 		}
 	}
 }

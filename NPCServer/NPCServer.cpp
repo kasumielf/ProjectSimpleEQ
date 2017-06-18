@@ -11,7 +11,6 @@ static int SYSTEM_Set_RespawnPosition(lua_State * l)
 	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -2));
 	int player_id = (int)lua_tonumber(l, -1);
 
-	std::cout << "bind" << std::endl;
 	lua_pop(l, 7);
 	return 0;
 }
@@ -28,6 +27,10 @@ static int SYSTEM_Send_Message(lua_State * l)
 	res.npc_id = npc_id;
 
 	size_t cs;
+
+	if (answer == nullptr || cls == nullptr)
+		return 0;
+
 	mbstowcs_s(&cs, res.message,MAX_CHAT_MESSAGE_LENGTH ,answer, MAX_CHAT_MESSAGE_LENGTH);
 
 	cls->SendToInternal("World", reinterpret_cast<unsigned char*>(&res));
@@ -377,11 +380,8 @@ void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNP
 
 void NPCServer::PlayerMove(const int id, Notify_World_To_NPC_PlayerMove * not)
 {
-	if (players.count(not->player_id) > 0)
-	{
-		players[not->player_id]->SetX(not->x);
-		players[not->player_id]->SetY(not->y);
-	}
+	players[not->player_id]->SetX(not->x);
+	players[not->player_id]->SetY(not->y);
 }
 
 void NPCServer::NPCStopAttackPlayer(const int id, Notify_World_To_NPC_NPCStopAttackPlayer * not)
@@ -399,8 +399,6 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 	{
 		if (IsClosed(np->GetX(), np->GetY(), p->GetX(), p->GetY()))
 		{
-			std::cout << "closed! " << p->GetId() << " " << np->GetId() << std::endl;
-			std::cout << np->GetX() << " " << np->GetY() << " " << p->GetX() << " " << p->GetY() << std::endl;
 			char msg[MAX_CHAT_MESSAGE_LENGTH];
 
 			wcstombs(msg, req->message, MAX_CHAT_MESSAGE_LENGTH);
@@ -413,7 +411,7 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 
 bool NPCServer::IsClosed(short from_x, short from_y, short to_x, short to_y)
 {
-	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 1;
+	return (from_x - to_x) * (from_x - to_x) + (from_y - to_y) * (from_y - to_y) <= 2;
 }
 
 void abort_(const char * s, ...)

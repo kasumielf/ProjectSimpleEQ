@@ -18,7 +18,6 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 
 				wchar_t query[256];
 				
-				std::wcout << "try to find id " << req->username << std::endl;
 				swprintf(query, sizeof(query), L"EXEC USER_IS_USER_EXIST '%wS'", req->username);
 
 				ResultMap* result = m_db.Execute(query);
@@ -31,10 +30,6 @@ void DBServer::ProcessPacket(const int id, unsigned char * packet)
 				{
 					res.user_uid = std::stoi(result->at(L"uuid"));
 					res.RESPONSE_ID = req->RESPONSE_ID;
-				}
-				else
-				{
-					std::wcout << "no find id " << req->username << std::endl;
 				}
 
 				Send(id, reinterpret_cast<unsigned char*>(&res));

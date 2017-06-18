@@ -9,8 +9,7 @@ function DoConversation(server, npc, player, faction, message)
 		answer = "죄송한 말씀이지만 오늘 초면이신 분께 그런 얘기를 드리긴 좀 그렇네요. 죄송합니다."
 	else
 	end
+
+	SYSTEM_Send_Message(server, npc, player, answer)
 	
-	if answer ~= nil then
-		SYSTEM_Send_Message(server, npc, player, answer)
-	end
 end

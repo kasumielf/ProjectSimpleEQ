@@ -44,8 +44,8 @@ public:
 	int y;
 	bool use;
 	int sendBytes;
-	int recvBytes;
-	int received;
+	int curr_packet_size;
+	int prev_packet_size;
 	std::chrono::high_resolution_clock::time_point last_move_time;
 	bool connect;
 	bool standby = false;
@@ -72,15 +72,6 @@ bool Send(short id, BasePacket* packet)
 
 	int retval = WSASend(clients[id].socket, &over->wsaBuf, 1, NULL, 0, &over->wsaOverlapped, NULL);
 
-	if (retval != 0)
-	{
-		error_display("send error", WSAGetLastError());
-		return false;
-	}
-	else
-	{
-	}
-
 	return true;
 }
 
@@ -94,7 +85,9 @@ void ProcessPacket(const int id, unsigned char* packet)
 		{
 			case ID_LOGIN_FAIL:
 			{
-				std::cout << "Login Fail" << std::endl;
+				LOGIN login;
+				wcscpy_s(login.ID_STR, test_account[id].c_str());
+				Send(id, &login);
 				break;
 			}
 			case ID_CONNECT_SERVER:
@@ -151,8 +144,6 @@ void ProcessPacket(const int id, unsigned char* packet)
 			{
 				LOGIN_OK *res = reinterpret_cast<LOGIN_OK*>(packet);
 
-				std::cout << "User " << res->username << " makes connection with World Server" << std::endl;
-
 				clients[id].x = res->X_POS;
 				clients[id].y = res->Y_POS;
 				clients[id].standby = true;
@@ -161,7 +152,6 @@ void ProcessPacket(const int id, unsigned char* packet)
 			}
 			case ID_Notify_Player_Move:
 			{
-				std::cout << "Player move" << std::endl;
 				break;
 			}
 			default:
@@ -176,7 +166,6 @@ void Disconnect(int id)
 {
 	closesocket(clients[id].socket);
 	clients[id].connect = false;
-	std::cout << "client is closed " << id << std::endl;
 }
 
 void MoveThread()
@@ -238,8 +227,8 @@ void WorkerThread()
 		else if (over->optype == IOCPOpType::OpRecv)
 		{
 			unsigned char* buf = clients[id].overlapped.iocp_buffer;
-			unsigned char curr_packet_size = clients[id].recvBytes;
-			unsigned char prev_packet_size = clients[id].received;
+			unsigned char curr_packet_size = clients[id].curr_packet_size;
+			unsigned char prev_packet_size = clients[id].prev_packet_size;
 
 			while (io_size > 0)
 			{
@@ -271,8 +260,8 @@ void WorkerThread()
 				}
 			}
 
-			clients[id].recvBytes = curr_packet_size;
-			clients[id].received = prev_packet_size;
+			clients[id].curr_packet_size = curr_packet_size;
+			clients[id].prev_packet_size = prev_packet_size;
 
 			DWORD flags = 0;
 			int retval = WSARecv(clients[id].socket, &clients[id].overlapped.wsaBuf, 1, NULL, &flags, &clients[id].overlapped.wsaOverlapped, NULL);
@@ -335,8 +324,8 @@ int main()
 		ServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 		clients[i].use = true;
-		clients[i].received = 0;
-		clients[i].recvBytes = 0;
+		clients[i].curr_packet_size = 0;
+		clients[i].prev_packet_size = 0;
 		ZeroMemory(&clients[i].overlapped, sizeof(clients[i].overlapped));
 		clients[i].overlapped.optype = IOCPOpType::OpRecv;
 		clients[i].overlapped.wsaBuf.buf = reinterpret_cast<CHAR *>(clients[i].overlapped.iocp_buffer);
@@ -346,21 +335,9 @@ int main()
 
 		int Result = WSAConnect(clients[i].socket, (sockaddr *)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 
-		clients[i].curr_packet_size = 0;
-		clients[i].prev_packet_data = 0;
-		ZeroMemory(&clients[i].recv_over, sizeof(clients[i].recv_over));
-		clients[i].recv_over.optype = IOCPOpType::OpRecv;
-		clients[i].recv_over.wsaBuf.buf = reinterpret_cast<CHAR *>(clients[i].recv_over.iocp_buffer);
-		clients[i].recv_over.wsaBuf.len = sizeof(clients[i].recv_over.iocp_buffer);
-
 		DWORD recv_flag = 0;
 
 		int retval = WSARecv(clients[i].socket, &clients[i].overlapped.wsaBuf, 1, NULL, &recv_flag, &clients[i].overlapped.wsaOverlapped, NULL);
-
-		if (retval != 0)
-		{
-			error_display("recv error", WSAGetLastError());
-		}
 
 		clients[i].connect = true;
 	}

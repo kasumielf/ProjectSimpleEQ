@@ -102,7 +102,6 @@ std::array<std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT> World::GetBlockD
 	height = png_get_image_height(png_ptr, info_ptr);
 	color_type = png_get_color_type(png_ptr, info_ptr);
 	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-
 	number_of_passes = png_set_interlace_handling(png_ptr);
 	png_read_update_info(png_ptr, info_ptr);
 
@@ -121,9 +120,9 @@ std::array<std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT> World::GetBlockD
 
 	for (int i = 0; i < height; ++i)
 	{
-		for (int j = 0; j < width; ++j)
+		for (int j = 0; j < width*4; j+=4)
 		{
-			data[i][j] = row_pointers[i][j] == 0 ? true : false;
+			data[i][j/4] = row_pointers[i][j] == 0 ? true : false;
 		}	
 	}
 	return data;
@@ -146,7 +145,7 @@ void World::BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WOR
 				if (y + v_y >= MAX_WORLD_HEIGHT || y + v_y < 0)	v_y = 0;
 
 				block[y][x][i] = (bool)data[y + v_y][x + v_x];
-				deg += 45;
+				deg -= 45;
 			}
 		}
 	}
@@ -202,8 +201,6 @@ bool World::MoveObject(Object * obj, const char direction)
 			world[from_y][from_x] = nullptr;
 			world[to_y][to_x] = ptr;
 		}
-
-		SetSector(obj, to_x, to_y);
 
 		return true;
 	}

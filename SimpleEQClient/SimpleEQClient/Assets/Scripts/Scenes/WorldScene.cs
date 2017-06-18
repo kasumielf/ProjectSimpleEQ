@@ -140,7 +140,8 @@ public class WorldScene : MonoBehaviour {
                         BasePlayer bm = Instantiate(basePlayerPrefab, new Vector3(-1, -1, -1), Quaternion.identity);
                         bm.baseObject = p;
 
-                        players.Add(p.id, bm);
+                        if(players.ContainsKey(p.id) == false)
+                            players.Add(p.id, bm);
                     }
 
                     break;
@@ -332,7 +333,6 @@ public class WorldScene : MonoBehaviour {
                 if (++rotation > 3)
                     rotation = (byte)0;
 
-                Debug.Log(rotation);
                 myPlayerObject.transform.Rotate(Vector3.up, 90);
             }
             else if (Input.GetKeyDown(KeyCode.F))
@@ -353,8 +353,6 @@ public class WorldScene : MonoBehaviour {
             {
 
             }
-
-            Debug.Log("Direction : " + movePacket.DIR);
         }
     }
 
@@ -455,7 +453,7 @@ public class WorldScene : MonoBehaviour {
                         msg.Push(npc);
                         MessageQueue.getInstance.Enqueue(msg);
                     }
-                    else if (res.TYPE == (char)ObjectType.NonPlayer)
+                    else if (res.TYPE == (char)ObjectType.Player)
                     {
                         Player p = new Player();
 

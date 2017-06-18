@@ -308,7 +308,6 @@ void BaseServer::AcceptThreadFunc(BaseServer* self)
 		self->lock.lock();
 		newId = self->m_id_lists.front();
 		self->m_id_lists.pop_front();
-		self->lock.unlock();
 
 		self->InitSession(newId);
 		self->m_sessions[newId]->socket = clientSock;
@@ -322,6 +321,8 @@ void BaseServer::AcceptThreadFunc(BaseServer* self)
 		self->m_sessions[newId]->overlapped.wsaBuf.len = sizeof(self->m_sessions[newId]->overlapped.iocp_buffer);
 
 		CreateIoCompletionPort((HANDLE)clientSock, self->m_iocp_handle, newId, 0);
+
+		self->lock.unlock();
 
 		flag = 0;
 

@@ -33,7 +33,7 @@ void NonPlayer::DoLuaConversation(void* server_ptr, unsigned int player, char * 
 	{
 		std::cout << "Lua Error : " << (char *)lua_tostring(l, -1) << std::endl;
 	}
-	lua_pop(l, 5);
+	//lua_pop(l, 5);
 }
 
 void NonPlayer::SetRegenTime()
