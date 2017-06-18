@@ -346,6 +346,13 @@ int main()
 
 		int Result = WSAConnect(clients[i].socket, (sockaddr *)&ServerAddr, sizeof(ServerAddr), NULL, NULL, NULL, NULL);
 
+		clients[i].curr_packet_size = 0;
+		clients[i].prev_packet_data = 0;
+		ZeroMemory(&clients[i].recv_over, sizeof(clients[i].recv_over));
+		clients[i].recv_over.optype = IOCPOpType::OpRecv;
+		clients[i].recv_over.wsaBuf.buf = reinterpret_cast<CHAR *>(clients[i].recv_over.iocp_buffer);
+		clients[i].recv_over.wsaBuf.len = sizeof(clients[i].recv_over.iocp_buffer);
+
 		DWORD recv_flag = 0;
 
 		int retval = WSARecv(clients[i].socket, &clients[i].overlapped.wsaBuf, 1, NULL, &recv_flag, &clients[i].overlapped.wsaOverlapped, NULL);

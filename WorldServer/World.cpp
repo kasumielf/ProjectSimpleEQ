@@ -189,9 +189,6 @@ bool World::MoveObject(Object * obj, const char direction)
 {
 	// 0 : UP 2: RIGHT 4 : DOWN : 6 : LEFT
 
-	if (direction < 0 || direction > 8)
-		return false;
-
 	short from_x = obj->GetX(), from_y = obj->GetY();
 	
 	if (block[from_y][from_x][direction] == false)
