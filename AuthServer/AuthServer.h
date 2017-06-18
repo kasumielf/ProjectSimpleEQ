@@ -6,7 +6,7 @@ class AuthServer :
 	public BaseServer
 {
 public:
-	AuthServer(const int capacity, const short port) : BaseServer(capacity, port) {}
+	AuthServer(const int capacity, const short port) : BaseServer(capacity, port, false) {}
 	~AuthServer() {}
 
 	virtual void ProcessPacket(const int id, unsigned char* packet);

@@ -31,6 +31,7 @@
     <ClCompile Include="tinyxml2\tinyxml2.cpp">
       <Filter>tinyXml2</Filter>
     </ClCompile>
+    <ClCompile Include="AStar.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NPCServer.h">
@@ -51,6 +52,7 @@
     <ClInclude Include="tinyxml2\tinyxml2.h">
       <Filter>tinyXml2</Filter>
     </ClInclude>
+    <ClInclude Include="AStar.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

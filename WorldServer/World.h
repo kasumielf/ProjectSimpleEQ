@@ -41,7 +41,7 @@ public:
 
 	void AddObject(Object* obj, unsigned short x, unsigned short y) { world[y][x] = obj; }
 	void RemoveObject(unsigned short x, unsigned short y);
-	void MoveObject(Object* obj, const char direction);
+	bool MoveObject(Object* obj, const char direction);
 	void SetSector(Object* obj, unsigned short x, unsigned short y);
 
 	void Destroy();

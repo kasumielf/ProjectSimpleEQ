@@ -23,14 +23,11 @@ void AuthServer::ProcessPacket(const int id, unsigned char * packet)
 				wcscpy_s(req.username, recvPacket->ID_STR);
 				SendToInternal("DB", reinterpret_cast<unsigned char*>(&req));
 
-				Logging(L"Login request by username %ws", recvPacket->ID_STR);
 				break;
 			}
 			case ID_LOGOUT:
 			{
 				LOGOUT *recvPacket = reinterpret_cast<LOGOUT*>(packet);
-
-				Logging(L"Logout request from %d", id);
 
 				CloseSocket(id);
 
@@ -45,7 +42,7 @@ void AuthServer::ProcessPacket(const int id, unsigned char * packet)
 				{
 					Request_Auth_To_World_AllocateUser req;
 
-					req.RESPONSE_ID = recvPacket->RESPONSE_ID;
+					req.RESPONSE_ID = recvPacket->client_id;
 					req.user_uid = uuid;
 					
 					SendToInternal("World", reinterpret_cast<unsigned char*>(&req));
@@ -65,19 +62,16 @@ void AuthServer::ProcessPacket(const int id, unsigned char * packet)
 				if (res->success)
 				{
 					CONNECT_SERVER connPacket;
-					// ToDo : 하드 코딩된거 수정할 것.
 					wcscpy_s(connPacket.ip, L"127.0.0.1");
 					connPacket.port = 4003;
 					connPacket.user_uid = res->user_uid;
 
-					Logging(L"User is allocated to World. Send World Server Connect request");
 					Send(res->client_id, reinterpret_cast<unsigned char*>(&connPacket));
 				}
 				else
 				{
 					LOGIN_FAIL not;
 					Send(res->client_id, reinterpret_cast<unsigned char*>(&not));
-					Logging(L"Login is failed. User is not exist");
 
 				}
 			}
@@ -96,5 +90,4 @@ void AuthServer::Logging(const wchar_t * msg, ...)
 
 void AuthServer::OnCloseSocket(const int id)
 {
-	Logging(L"Player %d is disconnected from Auth", id);
 }

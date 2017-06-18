@@ -36,7 +36,7 @@ static int SYSTEM_Send_Message(lua_State * l)
 	return 0;
 }
 
-NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity, port), last_add_npc_id(NPC_START_ID)
+NPCServer::NPCServer(const int capacity, const short port) : BaseServer(capacity, port, true), last_add_npc_id(NPC_START_ID)
 {
 	AttachIOCPEvent(IOCPOpType::OpNPCAttack, std::bind(&NPCServer::NPCAttackUpdate, this, std::placeholders::_1, this));
 	AttachIOCPEvent(IOCPOpType::OpNPCRegen, std::bind(&NPCServer::NPCRegen, this, std::placeholders::_1, this));
@@ -395,16 +395,19 @@ void NPCServer::PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat 
 	Object *p = players[req->sender_id];
 	NonPlayer *np = npcs[req->target_id];
 
-	if (IsClosed(np->GetX(), np->GetY(), p->GetX(), p->GetY()))
+	if (p != nullptr)
 	{
-		std::cout << "closed! " << p->GetId() << " " << np->GetId() << std::endl;
-		std::cout << np->GetX() << " " << np->GetY() << " " << p->GetX() << " " << p->GetY() << std::endl;
-		char msg[MAX_CHAT_MESSAGE_LENGTH];
+		if (IsClosed(np->GetX(), np->GetY(), p->GetX(), p->GetY()))
+		{
+			std::cout << "closed! " << p->GetId() << " " << np->GetId() << std::endl;
+			std::cout << np->GetX() << " " << np->GetY() << " " << p->GetX() << " " << p->GetY() << std::endl;
+			char msg[MAX_CHAT_MESSAGE_LENGTH];
 
-		wcstombs(msg, req->message, MAX_CHAT_MESSAGE_LENGTH);
+			wcstombs(msg, req->message, MAX_CHAT_MESSAGE_LENGTH);
 
-		if (np->HasScript() == true)
-			np->DoLuaConversation((void*)this, p->GetId(), msg);
+			if (np->HasScript() == true)
+				np->DoLuaConversation((void*)this, p->GetId(), msg);
+		}
 	}
 }
 

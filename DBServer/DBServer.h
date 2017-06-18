@@ -11,7 +11,7 @@ private:
 	DBManager m_db;
 
 public:
-	DBServer(const int capacity, const short port) : BaseServer(capacity, port) {}
+	DBServer(const int capacity, const short port) : BaseServer(capacity, port, false) {}
 	~DBServer() {}
 
 	virtual void ProcessPacket(const int id, unsigned char* packet);

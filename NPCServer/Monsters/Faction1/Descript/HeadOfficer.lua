@@ -10,5 +10,7 @@ function DoConversation(server, npc, player, faction, message)
 	else
 	end
 	
-	SYSTEM_Send_Message(server, npc, player, answer)
+	if answer ~= nil then
+		SYSTEM_Send_Message(server, npc, player, answer)
+	end
 end

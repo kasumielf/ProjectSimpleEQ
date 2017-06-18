@@ -14,8 +14,8 @@ const short MAX_OBJECT_SIGHT = 20;
 
 const unsigned int MAX_SESSION_ID_POOL = 100000;
 
-const unsigned short MAX_SECTOR_WIDTH = 15;
-const unsigned short MAX_SECTOR_HEIGHT = 15;
+const unsigned short MAX_SECTOR_WIDTH = 30;
+const unsigned short MAX_SECTOR_HEIGHT = 30;
 
 const unsigned short MAX_SIGHT_RANGE = 10;
 const unsigned short NPC_START_ID = 12000;

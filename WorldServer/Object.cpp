@@ -15,9 +15,9 @@ void Object::MoveByDirection(const char direction)
 {
 	switch (direction)
 	{
-	case 0:	y++; break;
+	case 0:	y--; break;
 	case 2: x++; break;
-	case 4: y--; break;
+	case 4: y++; break;
 	case 6: x--; break;
 	}
 

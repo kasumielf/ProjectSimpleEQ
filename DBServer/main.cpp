@@ -15,5 +15,6 @@ int main(int argc, char** argv)
 
 	while (true)
 	{
+		Sleep(1000);
 	}
 }

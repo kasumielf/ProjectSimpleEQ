@@ -33,8 +33,9 @@ private :
 	std::unordered_map<std::string, int> m_internals_id;
 	TimerEventManager m_timerEvents;
 
+	bool use_timer = true;
 public:
-	BaseServer(const int capacity, const short port)  : m_port(port), m_capacity(capacity) {}
+	BaseServer(const int capacity, const short port, bool use_timer)  : m_port(port), m_capacity(capacity), use_timer(use_timer) {}
 	~BaseServer();
 
 	void Init();

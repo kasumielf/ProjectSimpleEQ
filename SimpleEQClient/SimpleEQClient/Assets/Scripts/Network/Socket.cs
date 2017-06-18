@@ -14,7 +14,7 @@ namespace Assets.Scripts.Network
     {
         private byte[] recvBuffer;
         private byte[] packetBuffer;
-        private Int32 recvPacketSize;
+        //private Int32 recvPacketSize;
         private Int32 prevRecvPacketSize;
         private Int32 requiredPacketSize;
 
@@ -76,47 +76,35 @@ namespace Assets.Scripts.Network
 
         public void Receive(IAsyncResult ar)
         {
-            object obj = ar.AsyncState;
-
-            Int32 io_size = this.client.EndReceive(ar);
-            Int32 packet_size = recvPacketSize;
-            Int32 prev_packet_size = io_size + prevRecvPacketSize;
-
-            byte[] packet = new byte[256];
-
-            while (io_size != 0)
+            try
             {
-                if (requiredPacketSize == 0)
-                    requiredPacketSize = BitConverter.ToUInt16(new byte[2] { recvBuffer[1], recvBuffer[2] }, 0); ;
+                int nReadSize = client.EndReceive(ar);
 
-                if (io_size + recvPacketSize >= prevRecvPacketSize)
+                if (nReadSize != 0)
                 {
-                    Array.Copy(recvBuffer, 0, packetBuffer, recvPacketSize, requiredPacketSize - recvPacketSize);
-                    packetProcessHandler(packetBuffer);
+                    packetProcessHandler(recvBuffer);
+                    Array.Clear(recvBuffer, 0, 256);
+                }
 
-                    io_size -= requiredPacketSize - recvPacketSize;
-                    requiredPacketSize = 0;
-                    recvPacketSize = 0;
-                }
-                else
-                {
-                    Array.Copy(recvBuffer, 0, packetBuffer, recvPacketSize, io_size);
-                    recvPacketSize += io_size;
-                    io_size = 0;
-                }
+                client.BeginReceive(this.recvBuffer, 0, this.recvBuffer.Length, SocketFlags.None, new AsyncCallback(recvHandler), this);
             }
-
-            client.BeginReceive(this.recvBuffer, 0, this.recvBuffer.Length, SocketFlags.None, new AsyncCallback(recvHandler), this);
+            catch (SocketException e)
+            {
+                Debug.Log(e.Message);
+            }
+            
         }
 
         public void SendData(byte[] data)
         {
-            requiredSendByte = data.Length;
-            Array.Copy(data, sendBuffer, requiredSendByte);
+            int size = data[1];
+
+            //requiredSendByte = data.Length;
+            Array.Copy(data, sendBuffer, size);
 
             try
             {
-                client.BeginSend(sendBuffer, 0, requiredSendByte, SocketFlags.None, Send, this);
+                client.BeginSend(sendBuffer, 0, size, SocketFlags.None, Send, this);
             }
             catch (Exception e)
             {
@@ -128,6 +116,7 @@ namespace Assets.Scripts.Network
         public void Send(IAsyncResult ar)
         {
             sendByte = client.EndSend(ar);
+            Array.Clear(sendBuffer, 0, sendByte);
         }
 
         public bool Disconnect()

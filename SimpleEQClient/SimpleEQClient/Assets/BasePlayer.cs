@@ -15,6 +15,6 @@ public class BasePlayer : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        transform.position = new Vector3(this.baseObject.x, 0.0f, this.baseObject.y);
+        transform.position = new Vector3(300 - this.baseObject.x, 0.0f, this.baseObject.y);
 	}
 }

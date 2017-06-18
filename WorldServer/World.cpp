@@ -123,8 +123,8 @@ std::array<std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT> World::GetBlockD
 	{
 		for (int j = 0; j < width; ++j)
 		{
-			data[j][i] = row_pointers[i][j] == 0 ? true : false;
-		}
+			data[i][j] = row_pointers[i][j] == 0 ? true : false;
+		}	
 	}
 	return data;
 }
@@ -135,7 +135,7 @@ void World::BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WOR
 	{
 		for (int x = 0; x < MAX_WORLD_WIDTH; ++x)
 		{
-			int deg = 0;
+			int deg = 180;
 
 			for (int i = 0; i < 8; ++i)
 			{
@@ -145,7 +145,7 @@ void World::BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WOR
 				if (x + v_x >= MAX_WORLD_WIDTH || x + v_x < 0)	v_x = 0;
 				if (y + v_y >= MAX_WORLD_HEIGHT || y + v_y < 0)	v_y = 0;
 
-				block[y + v_y][x + v_x][i] = (bool)data[y + v_y][x + v_x];
+				block[y][x][i] = (bool)data[y + v_y][x + v_x];
 				deg += 45;
 			}
 		}
@@ -185,9 +185,12 @@ void World::RemoveObject(unsigned short x, unsigned short y)
 	world[y][x] = nullptr;
 }
 
-void World::MoveObject(Object * obj, const char direction)
+bool World::MoveObject(Object * obj, const char direction)
 {
 	// 0 : UP 2: RIGHT 4 : DOWN : 6 : LEFT
+
+	if (direction < 0 || direction > 8)
+		return false;
 
 	short from_x = obj->GetX(), from_y = obj->GetY();
 	
@@ -204,7 +207,11 @@ void World::MoveObject(Object * obj, const char direction)
 		}
 
 		SetSector(obj, to_x, to_y);
+
+		return true;
 	}
+
+	return false;
 }
 
 void World::SetSector(Object* obj, unsigned short x, unsigned short y)
@@ -215,7 +222,7 @@ void World::SetSector(Object* obj, unsigned short x, unsigned short y)
 			sector[obj->getCurrSectorY()][obj->getCurrSectorX()].RemovePlayer(obj->GetId());
 
 		sector[y / MAX_SECTOR_HEIGHT][x / MAX_SECTOR_WIDTH].AddPlayer(obj->GetId(), obj);
-		obj->setCurSectorPos(x / MAX_SECTOR_HEIGHT, y / MAX_SECTOR_WIDTH);
+		obj->setCurSectorPos(x / MAX_SECTOR_WIDTH, y / MAX_SECTOR_HEIGHT);
 	}
 
 }

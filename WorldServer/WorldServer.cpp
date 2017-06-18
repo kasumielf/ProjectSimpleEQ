@@ -3,7 +3,7 @@
 #include "WorldServer.h"
 #include "tinyxml2/tinyxml2.h"
 
-WorldServer::WorldServer(const int capacity, const short port) : BaseServer(capacity, port)
+WorldServer::WorldServer(const int capacity, const short port) : BaseServer(capacity, port, true)
 {
 	world = new World();
 
@@ -64,19 +64,31 @@ void WorldServer::Logging(const wchar_t * msg, ...)
 
 void WorldServer::OnCloseSocket(const int id)
 {
-	Logging(L"Player %d is closed", id);
-
 	Lock();
 
 	Player *o = players[id];
 
+	unsigned int my_id = o->GetId();
+
+	REMOVE_OBJECT closeNotify;
+	closeNotify.ID = my_id;
+
+	auto iter_b = world->GetPlayerBegin(o->getCurrSectorX(), o->getCurrSectorY());
+	auto iter_e = world->GetPlayerEnd(o->getCurrSectorX(), o->getCurrSectorY());
+
+	unsigned char* pk = reinterpret_cast<unsigned char*>(&closeNotify);
+
+	for (; iter_b != iter_e; ++iter_b)
+	{
+		if ((*iter_b).second->GetType() == ObjectType::Player && (*iter_b).second->GetId() != my_id)
+			Send(socketIds[(*iter_b).second->GetId()], pk);
+	}
+
 	if (o != nullptr)
 	{
 		socketIds.erase(o->GetId());
-		Logging(L"Player %d is closed", id);
 		world->DeleteObject(o);
 		players[id] = nullptr;
-		
 
 		//delete o;
 	}
@@ -295,7 +307,7 @@ void WorldServer::MoveObject(unsigned int sock_id, Player * p)
 
 			for (; iter_b != iter_e; ++iter_b)
 			{
-				if ((*iter_b).second != nullptr && (*iter_b).second->GetId() != user_id)
+				if ((*iter_b).second != nullptr && (*iter_b).second->GetId())
 				{
 					short x = (*iter_b).second->GetX();
 					short y = (*iter_b).second->GetY();
@@ -398,7 +410,6 @@ void WorldServer::AllocateUser(const int id, Request_Auth_To_World_AllocateUser 
 		user_req.user_uid = req->user_uid;
 		user_req.client_id = req->RESPONSE_ID;
 
-		Logging(L"Find User(uid %d) from DB", req->user_uid);
 		SendToInternal("DB", reinterpret_cast<unsigned char*>(&user_req));
 	}
 	else
@@ -408,7 +419,6 @@ void WorldServer::AllocateUser(const int id, Request_Auth_To_World_AllocateUser 
 		res.client_id = req->RESPONSE_ID;
 		res.success = false;
 
-		Logging(L"User(uid %d) is failed allocated in Game World", req->user_uid);
 		Send(id, reinterpret_cast<unsigned char*>(&res));
 	}
 
@@ -435,9 +445,12 @@ void WorldServer::GetUserState(const int id, Response_DB_To_World_GetUserStatus 
 		p->SetStartX(res->start_x);
 		p->SetStartY(res->start_x);
 		p->SetBaseDamage(levelData.base_damage);
+		p->SetCurrentState(ObjectState::Idle);
+
+		Lock();
 		world->CreateObject(p);
 		world->AddObject(p, p->GetX(), p->GetY());
-		p->SetCurrentState(ObjectState::Idle);
+		Unlock();
 	}
 
 	auth_res.RESPONSE_ID = res->RESPONSE_ID;
@@ -507,83 +520,57 @@ void WorldServer::EnterGameWorld(const int id, Request_Enter_GameWorld * req)
 		notify.y = my_y;
 		wcscpy_s(notify.player_name, p->GetName());
 
-		if (my_x % MAX_SECTOR_WIDTH < MAX_SECTOR_WIDTH / 2)
-			start_j = -1;
+		auto iter_b = world->GetPlayerBegin(p->getCurrSectorX(), p->getCurrSectorY());
+		auto iter_e = world->GetPlayerEnd(p->getCurrSectorX(), p->getCurrSectorY());
 
-		if (my_y % MAX_SECTOR_HEIGHT < MAX_SECTOR_HEIGHT / 2)
-			start_i = -1;
-
-		short dest_i = start_i;
-		short dest_j = start_j;
-
-		dest_i++;
-		dest_j++;
-
-		for (int i = start_i; i <= dest_i; i++)
+		for (; iter_b != iter_e; ++iter_b)
 		{
-			for (int j = start_j; j <= dest_j; j++)
+			short target_id = (*iter_b).second->GetId();
+			ObjectType target_type = (*iter_b).second->GetType();
+
+			if (target_id != p->GetId())
 			{
-				int sec_x = sector_x + j;
-				int sec_y = sector_y + i;
+				short x = (*iter_b).second->GetX();
+				short y = (*iter_b).second->GetY();
 
-				if (sec_x < 0)
-					sec_x = 0;
-
-				if (sec_y < 0)
-					sec_y = 0;
-
-				auto iter_b = world->GetPlayerBegin(sec_x, sec_y);
-				auto iter_e = world->GetPlayerEnd(sec_x, sec_y);
-
-				for (; iter_b != iter_e; ++iter_b)
+				if (IsClosed(my_x, my_y, x, y))
 				{
-					short target_id = (*iter_b).second->GetId();
-					ObjectType target_type = (*iter_b).second->GetType();
+					if (target_type != ObjectType::NonPlayer && target_id != p->GetId())
+						Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&notify));
 
-					if (target_id != p->GetId())
-					{
-						short x = (*iter_b).second->GetX();
-						short y = (*iter_b).second->GetY();
+					p->AddViewList(target_id, target_type);
 
-						if (IsClosed(my_x, my_y, x, y))
-						{
-							if (target_type != ObjectType::NonPlayer && target_id != p->GetId())
-								Send(socketIds[target_id], reinterpret_cast<unsigned char*>(&notify));
+					ADD_OBJECT addNotify;
 
-							p->AddViewList(target_id, target_type);
+					Object *o = (*iter_b).second;
+					addNotify.ID = o->GetId();
+					addNotify.x = o->GetX();
+					addNotify.y = o->GetY();
+					addNotify.TYPE = (char)o->GetType();
+					wcscpy_s(addNotify.name, o->GetName());
 
-							ADD_OBJECT addNotify;
-
-							Object *o = (*iter_b).second;
-							addNotify.ID = o->GetId();
-							addNotify.x = o->GetX();
-							addNotify.y = o->GetY();
-							addNotify.TYPE = (char)o->GetType();
-							wcscpy_s(addNotify.name, o->GetName());
-
-							Send(id, reinterpret_cast<unsigned char*>(&addNotify));
-						}
-					}
+					Send(id, reinterpret_cast<unsigned char*>(&addNotify));
 				}
 			}
 		}
 	}
-
 }
 
 void WorldServer::Move(const int id, MOVE * req)
 {
 	Player* myPlayer = players[id];
-	world->MoveObject(myPlayer, req->DIR);
-	MoveObject(id, myPlayer);
+	if (world->MoveObject(myPlayer, req->DIR) == true)
+	{
+		MoveObject(id, myPlayer);
+		Notify_World_To_NPC_PlayerMove not;
 
-	Notify_World_To_NPC_PlayerMove not;
+		not.player_id = myPlayer->GetId();
+		not.x = myPlayer->GetX();
+		not.y = myPlayer->GetY();
 
-	not.player_id = myPlayer->GetId();
-	not.x = myPlayer->GetX();
-	not.y = myPlayer->GetY();
+		SendToInternal("NPC", reinterpret_cast<unsigned char*>(&not));
 
-	SendToInternal("NPC", reinterpret_cast<unsigned char*>(&not));
+	}
 }
 
 void WorldServer::Attack(const int id, ATTACK * req)
@@ -613,8 +600,6 @@ void WorldServer::Logout(const int id, LOGOUT * req)
 	{
 		CloseSocket(id);
 	}
-
-	Logging(L"Player %d Exit", id);
 
 }
 
@@ -650,7 +635,7 @@ void WorldServer::NPCCreated(const int id, Notify_NPC_To_World_NPCreatedAdd_NPC 
 	for (; iter_b != iter_e; ++iter_b)
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
-			Send(socketIds[(*iter_b).first], pk);
+			Send(socketIds[(*iter_b).second->GetId()], pk);
 	}
 }
 
@@ -669,7 +654,7 @@ void WorldServer::NPCDieFromPlayer(const int id, Notify_NPC_To_World_NPCDieFromP
 	for (; iter_b != iter_e; ++iter_b)
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
-			Send(socketIds[(*iter_b).first], pk);
+			Send(socketIds[(*iter_b).second->GetId()], pk);
 	}
 
 	world->RemoveObject(o->GetX(), o->GetY());
@@ -721,7 +706,7 @@ void WorldServer::NPCDamaged(const int id, Notify_NPC_To_World_NPCDamaged * not)
 	for (; iter_b != iter_e; ++iter_b)
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
-			Send(socketIds[(*iter_b).first], pk);
+			Send(socketIds[(*iter_b).second->GetId()], pk);
 	}
 }
 
@@ -780,13 +765,13 @@ void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPla
 	{
 		if ((*iter_b).second->GetType() == ObjectType::Player)
 		{
-			Send(socketIds[(*iter_b).first], pk);
+			Send(socketIds[(*iter_b).second->GetId()], pk);
 
 			if (player_die == true)
 			{
 				REMOVE_OBJECT removePacket;
 				removePacket.ID = not->target_id;
-				Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&removePacket));
+				Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&removePacket));
 			}
 		}
 	}
@@ -855,7 +840,7 @@ void WorldServer::NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage
 		if ((*iter_b).second->GetType() == ObjectType::Player)
 		{
 			notMsg.sender_id = p->GetId();
-			Send(socketIds[(*iter_b).first], reinterpret_cast<unsigned char*>(&notMsg));
+			Send(socketIds[(*iter_b).second->GetId()], reinterpret_cast<unsigned char*>(&notMsg));
 		}
 	}
 
@@ -890,7 +875,7 @@ void WorldServer::NPCMove(const int id, Notify_NPC_To_World_NPCMove * not)
 		{
 			if ((*iter_b).second->GetType() == ObjectType::Player)
 			{
-				Send(socketIds[(*iter_b).first], pk);
+				Send(socketIds[(*iter_b).second->GetId()], pk);
 			}
 		}
 	}
