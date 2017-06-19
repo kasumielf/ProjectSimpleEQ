@@ -34,9 +34,7 @@ Node * AStar::InsertCloseNode(Node * node)
 
 void AStar::SortOpenNode()
 {
-	int open_len = open_node.size();
-
-	if (open_len < 2) return;
+	if (open_node.size() < 2) return;
 
 	Node* pNode;
 
@@ -46,7 +44,7 @@ void AStar::SortOpenNode()
 	{
 		cont = false;
 
-		for (int i = 0; i < open_len - 1; ++i)
+		for (int i = 0; i < open_node.size() - 1; ++i)
 		{
 			if (!NodeCompare(open_node[i], open_node[i + 1]))
 			{

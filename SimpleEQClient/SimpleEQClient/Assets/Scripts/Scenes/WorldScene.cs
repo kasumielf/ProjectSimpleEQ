@@ -238,12 +238,12 @@ public class WorldScene : MonoBehaviour {
             case MessageType.GAMEOVER:
                 {
                     game_start = false;
-                    GameOverOverlay.active = true;
+                    GameOverOverlay.SetActive(true);
                     break;
                 }
             case MessageType.RESTART:
                 {
-                    GameOverOverlay.active = false;
+                    GameOverOverlay.SetActive(false);
                     game_start = true;
                     break;
                 }
@@ -251,12 +251,12 @@ public class WorldScene : MonoBehaviour {
         }
     }
 
-    int line_count = 0;
+    int btl_line_count = 0;
 
     private void InputBattleTextLine(String text)
     {
         damageLog.text += (text + System.Environment.NewLine);
-        if (line_count++ > 10)
+        if (btl_line_count++ > 10)
         {
             int index = damageLog.text.IndexOf(System.Environment.NewLine);
             string newtxt = damageLog.text.Substring(index + System.Environment.NewLine.Length);
@@ -264,10 +264,11 @@ public class WorldScene : MonoBehaviour {
         }
     }
 
+    int cht_line_count = 0;
     private void InputChatTextLine(String text)
     {
         chatLog.text += (text + System.Environment.NewLine);
-        if (line_count++ > 10)
+        if (cht_line_count++ > 10)
         {
             int index = chatLog.text.IndexOf(System.Environment.NewLine);
             string newtxt = chatLog.text.Substring(index + System.Environment.NewLine.Length);

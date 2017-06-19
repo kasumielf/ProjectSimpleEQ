@@ -50,6 +50,7 @@ void WorldServer::ProcessPacket(const int id, unsigned char * packet)
 			case ID_Notify_NPC_To_World_NPCDamaged: { NPCDamaged(id, reinterpret_cast<Notify_NPC_To_World_NPCDamaged*>(packet)); break; }
 			case ID_Notify_NPC_To_World_NPCAttackPlayer: { NPCAttackPlayer(id, reinterpret_cast<Notify_NPC_To_World_NPCAttackPlayer*>(packet)); break; }
 			case ID_Response_NPC_To_World_NPCMessage: { NotifyNPCMesage(id, reinterpret_cast<Response_NPC_To_World_NPCMessage*>(packet)); break; }
+			case ID_Notify_NPC_To_World_PlayerSetRespawnPoint: {SetRespawnPoint(id, reinterpret_cast<Notify_NPC_To_World_PlayerSetRespawnPoint*>(packet)); break; }
 		}
 	}
 }
@@ -903,3 +904,12 @@ void WorldServer::NPCMove(const int id, Notify_NPC_To_World_NPCMove * not)
 	}
 }
 
+void WorldServer::SetRespawnPoint(const int id, Notify_NPC_To_World_PlayerSetRespawnPoint * not)
+{
+	if (world->GetObjectById(not->player_id) != nullptr && world->GetObjectById(not->player_id)->GetType() == ObjectType::Player)
+	{
+		Player *p = dynamic_cast<Player*>(world->GetObjectById(not->player_id));
+		p->SetStartX(p->GetX());
+		p->SetStartY(p->GetY());
+	}
+}

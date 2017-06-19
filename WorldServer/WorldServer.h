@@ -54,5 +54,6 @@ public:
 	void SendChatMessage(const int id, CHAT * req);
 	void NotifyNPCMesage(const int id, Response_NPC_To_World_NPCMessage * res);
 	void NPCMove(const int id, Notify_NPC_To_World_NPCMove * not);
+	void SetRespawnPoint(const int id, Notify_NPC_To_World_PlayerSetRespawnPoint * not);
 };
 

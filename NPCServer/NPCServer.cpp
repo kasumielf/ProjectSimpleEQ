@@ -10,7 +10,10 @@ static int SYSTEM_Set_RespawnPosition(lua_State * l)
 {
 	NPCServer *cls = (NPCServer*)(lua_touserdata(l, -2));
 	int player_id = (int)lua_tonumber(l, -1);
-
+	
+	Notify_NPC_To_World_PlayerSetRespawnPoint not;
+	not.player_id = player_id;
+	cls->SendToInternal("World", reinterpret_cast<unsigned char*>(&not));
 	lua_pop(l, 7);
 	return 0;
 }

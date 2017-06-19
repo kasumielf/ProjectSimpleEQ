@@ -15,6 +15,7 @@ const unsigned char ID_Notify_World_To_NPC_PlayerExit = 107;
 const unsigned char ID_Notify_World_To_NPC_PlayerAttackNPC = 108;
 const unsigned char ID_Notify_World_To_NPC_PlayerMove = 109;
 const unsigned char ID_Notify_World_To_NPC_NPCStopAttackPlayer = 110;
+const unsigned char ID_Notify_NPC_To_World_PlayerSetRespawnPoint = 111;
 
 #pragma pack(push, 1)
 
@@ -143,6 +144,17 @@ struct Notify_World_To_NPC_NPCStopAttackPlayer : InnerBasePacket
 
 	unsigned int npc_id;
 	unsigned int target_id;
+};
+
+struct Notify_NPC_To_World_PlayerSetRespawnPoint : InnerBasePacket
+{
+	Notify_NPC_To_World_PlayerSetRespawnPoint()
+	{
+		PACKET_ID = ID_Notify_NPC_To_World_PlayerSetRespawnPoint;
+		SIZE = sizeof(Notify_NPC_To_World_PlayerSetRespawnPoint);
+	}
+
+	unsigned int player_id;
 };
 
 

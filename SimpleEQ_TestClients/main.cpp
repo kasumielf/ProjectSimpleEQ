@@ -366,4 +366,3 @@ int main()
 			closesocket(clients[i].socket);
 	}
 }
-
