@@ -4,7 +4,8 @@
 	<Exp>100000</Exp>
 	<MaxHp>10000</MaxHp>
 	<BaseDamage>100</BaseDamage>
-	<FactionGroup>2</FactionGroup>
+	<AllyFaction>2</AllyFaction>
+	<HostilFaction>1</HostilFaction>
 	<RespawnTime>3600000</RespawnTime>
 	<DescriptScript src="Monsters\\Faction2\\Descript\\SoulBinder.lua"></DescriptScript>
 </Monster>

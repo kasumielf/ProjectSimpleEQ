@@ -2,15 +2,15 @@
 
 #include "Object.h"
 #include "../Common/InnerNotifyPacket.h"
-
+#include <bitset>
 class NonPlayer : public Object
 {
 private:
 	unsigned int level;
 	unsigned long exp;
 
-	unsigned int curr_hp;
-	unsigned int max_hp;
+	short curr_hp;
+	short max_hp;
 
 	unsigned int base_damage;
 	unsigned int faction_group;
@@ -23,15 +23,15 @@ public:
 
 	void SetLevel(unsigned int _level) { level = _level; }
 	void SetExp(unsigned long _exp) { exp = _exp; }
-	void SetHP(unsigned int _hp) { curr_hp = _hp; }
-	void SetMaxHp(unsigned int _hp) { max_hp = _hp; }
+	void SetHP(short _hp) { curr_hp = _hp; }
+	void SetMaxHp(short _hp) { max_hp = _hp; }
 
 	void SetBaseDamage(unsigned int _dmg) { base_damage = _dmg; }
 	void SetFactionGroup(unsigned int _grp) { faction_group = _grp; }
 
 	const unsigned int GetLevel() { return level; }
 	const unsigned int GetExp() { return exp; }
-	const unsigned int GetHP() { return curr_hp; }
+	const int GetHP() { return curr_hp; }
 	const unsigned int GetMaxHp() { return max_hp; }
 
 	const unsigned int GetRealDamage() { return base_damage * level; }

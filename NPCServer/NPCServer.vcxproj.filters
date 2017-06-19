@@ -53,6 +53,7 @@
       <Filter>tinyXml2</Filter>
     </ClInclude>
     <ClInclude Include="AStar.h" />
+    <ClInclude Include="Node.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

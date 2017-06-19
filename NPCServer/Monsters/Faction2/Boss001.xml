@@ -4,6 +4,7 @@
 	<Exp>1000</Exp>
 	<MaxHp>2000</MaxHp>
 	<BaseDamage>150</BaseDamage>
-	<FactionGroup>2</FactionGroup>
+	<AllyFaction>2</AllyFaction>
+	<HostilFaction>1</HostilFaction>
 	<RespawnTime>600000</RespawnTime>
 </Monster>

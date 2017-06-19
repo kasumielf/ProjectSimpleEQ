@@ -36,6 +36,17 @@ void NonPlayer::DoLuaConversation(void* server_ptr, unsigned int player, char * 
 	//lua_pop(l, 5);
 }
 
+void NonPlayer::MakePath(std::bitset<8>& blocks)
+{
+	startNode->x = GetX();
+	startNode->y = GetY();
+
+	endNode->x = target_x;
+	endNode->y = target_y;
+
+	move_paths = path_seracher.FindPath(startNode, endNode, blocks);
+}
+
 void NonPlayer::SetRegenTime()
 {
 	next_regen_time = std::chrono::high_resolution_clock::now() + std::chrono::duration<double, std::milli>(respawn_time);

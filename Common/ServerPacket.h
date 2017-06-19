@@ -19,7 +19,6 @@ const unsigned char ID_Notify_NPC_Move = 24;
 const unsigned char ID_Notify_Player_Attack_NPC = 71;
 const unsigned char ID_Notify_NPC_Attack_Player = 72;
 const unsigned char ID_Notify_NPC_Damaged = 73;
-
 #pragma pack(push, 1)
 struct LOGIN_OK : BasePacket
 {
@@ -33,10 +32,10 @@ struct LOGIN_OK : BasePacket
 	unsigned int ID;
 	unsigned short X_POS;
 	unsigned short Y_POS;
-	unsigned short HP;
+	short HP;
 	unsigned short LEVEL;
 	unsigned long EXP;
-	unsigned short max_hp;
+	short max_hp;
 	unsigned short base_damage;
 };
 
@@ -83,7 +82,7 @@ struct STAT_CHANGE : BasePacket
 		SIZE = sizeof(STAT_CHANGE);
 	}
 
-	unsigned short HP;
+	short HP;
 	unsigned short LEVEL;
 	unsigned long EXP;
 };
@@ -197,7 +196,7 @@ struct Notify_NPC_Damaged : BasePacket
 	}
 	
 	unsigned int npc_id;
-	unsigned short npc_hp;
+	short npc_hp;
 	unsigned short gained_damage;
 };
 
@@ -208,6 +207,7 @@ struct Notify_Player_Die : BasePacket
 		PACKET_ID = ID_Notify_Player_Die;
 		SIZE = sizeof(Notify_Player_Die);
 	}
+	bool restart;
 };
 
 struct Notify_Player_Info : BasePacket
@@ -218,10 +218,10 @@ struct Notify_Player_Info : BasePacket
 		SIZE = sizeof(Notify_Player_Info);
 	}
 
-	unsigned short HP;
+	short HP;
 	unsigned short LEVEL;
 	unsigned long EXP;
-	unsigned short max_hp;
+	short max_hp;
 	unsigned short base_damage;
 };
 
@@ -233,7 +233,7 @@ struct Notify_Player_HPRegen : BasePacket
 		SIZE = sizeof(Notify_Player_HPRegen);
 	}
 	
-	unsigned short curr_hp;
+	short curr_hp;
 };
 
 struct Notify_ChatMessage : BasePacket

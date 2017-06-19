@@ -10,7 +10,7 @@ namespace Objects
         public uint level;
         public long exp;
 
-        public uint hp;
+        public short hp;
         public uint base_damage;
         public uint faction_group;
 

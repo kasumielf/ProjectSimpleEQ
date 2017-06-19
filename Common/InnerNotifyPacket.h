@@ -29,8 +29,8 @@ struct Notify_NPC_To_World_NPCreatedAdd_NPC : InnerBasePacket
 	unsigned int id;
 	wchar_t name[12];
 	unsigned int level;
-	unsigned int curr_hp;
-	unsigned int max_hp;
+	short curr_hp;
+	short max_hp;
 	unsigned int faction_group;
 	unsigned short x;
 	unsigned short y;
@@ -57,7 +57,7 @@ struct Notify_NPC_To_World_NPCDamaged : InnerBasePacket
 	}
 	unsigned int npc_id;
 	unsigned int gained_damage;
-	unsigned int npc_hp;
+	short npc_hp;
 };
 
 struct Notify_NPC_To_World_NPCDieFromPlayer : InnerBasePacket

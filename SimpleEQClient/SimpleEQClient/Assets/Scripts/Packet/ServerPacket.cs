@@ -51,10 +51,10 @@ namespace ServerPacket
         public uint id;
         public ushort x_pos;
         public ushort y_pos;
-        public ushort hp;
+        public short hp;
         public ushort level;
         public uint exp;
-        public ushort max_hp;
+        public short max_hp;
         public ushort base_damage;
     };
 
@@ -105,7 +105,7 @@ namespace ServerPacket
             SIZE = (byte)Marshal.SizeOf(typeof(STAT_CHANGE));
         }
 
-        public ushort HP;
+        public short HP;
         public ushort LEVEL;
         public ulong EXP;
     };
@@ -228,7 +228,7 @@ namespace ServerPacket
         }
 
         public uint npc_id;
-        public ushort npc_hp;
+        public short npc_hp;
         public ushort gained_damage;
     };
 
@@ -241,6 +241,7 @@ namespace ServerPacket
             PACKET_ID = PacketId.ID_Notify_Player_Die;
             SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_Die));
         }
+        public bool restart;
     };
 
     [Serializable]
@@ -253,10 +254,10 @@ namespace ServerPacket
             SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_Info));
         }
 
-        public ushort HP;
+        public short HP;
         public ushort LEVEL;
         public uint EXP;
-        public ushort max_hp;
+        public short max_hp;
         public ushort base_damage;
     };
 
@@ -270,7 +271,7 @@ namespace ServerPacket
             SIZE = (byte)Marshal.SizeOf(typeof(Notify_Player_HPRegen));
         }
 
-        public ushort curr_hp;
+        public short curr_hp;
     };
 
     [Serializable]

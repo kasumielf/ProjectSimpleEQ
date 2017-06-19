@@ -5,7 +5,8 @@
 	<Exp>500</Exp>
 	<MaxHp>2000</MaxHp>
 	<BaseDamage>80</BaseDamage>
-	<FactionGroup>2</FactionGroup>
+	<AllyFaction>2</AllyFaction>
+	<HostilFaction>1</HostilFaction>
 	<RespawnTime>300000</RespawnTime>
 	<DescriptScript src="Monsters\\Faction2\\Descript\\Guard.lua"></DescriptScript>
 </Monster>

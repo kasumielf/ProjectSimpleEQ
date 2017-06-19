@@ -35,8 +35,8 @@ struct Response_DB_To_World_GetUserStatus : InnerBasePacket
 	wchar_t username[12];
 	unsigned short x;
 	unsigned short y;
-	unsigned short hp;
-	unsigned short max_hp;
+	short hp;
+	short max_hp;
 	unsigned short level;
 	unsigned long exp;
 	unsigned short start_x;

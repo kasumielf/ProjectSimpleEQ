@@ -19,6 +19,8 @@ void Object::MoveByDirection(const char direction)
 	case 2: x++; break;
 	case 4: y++; break;
 	case 6: x--; break;
+	default:
+		break;
 	}
 
 	if (x >= MAX_WORLD_WIDTH)

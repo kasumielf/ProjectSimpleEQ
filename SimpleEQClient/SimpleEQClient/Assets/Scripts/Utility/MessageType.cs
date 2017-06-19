@@ -15,4 +15,6 @@
     DAMAGED_NPC,
     PLAYER_DAMAGED,
     CHATTING,
+    RESTART,
+    GAMEOVER,
 }

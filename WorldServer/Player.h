@@ -15,8 +15,8 @@ class Player : public Object
 	unsigned long exp;
 	unsigned long require_exp;
 
-	unsigned short curr_hp;
-	unsigned short max_hp;
+	short curr_hp;
+	short max_hp;
 
 	unsigned short base_damage;
 
@@ -34,8 +34,8 @@ public:
 	void SetSocketId(unsigned int  _sockid) { socket_id = _sockid; }
 	void SetLevel(unsigned short _level) { level = _level; }
 	void SetExp(unsigned long _exp) { exp = _exp; }
-	void SetHP(unsigned short _hp) { curr_hp = _hp; }
-	void SetMaxHp(unsigned short _hp) { max_hp = _hp; }
+	void SetHP(short _hp) { curr_hp = _hp; }
+	void SetMaxHp(short _hp) { max_hp = _hp; }
 	void SetBaseDamage(unsigned short _dmg) { base_damage = _dmg; }
 	void SetRequiredExp(unsigned long _exp) { require_exp = _exp; }
 	void SetStartX(short _x) { start_x = _x; }

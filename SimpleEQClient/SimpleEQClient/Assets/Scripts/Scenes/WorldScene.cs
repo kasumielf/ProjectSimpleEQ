@@ -9,6 +9,10 @@ using System.Text;
 using Objects;
 using UnityEngine.EventSystems;
 public class WorldScene : MonoBehaviour {
+
+    private bool game_start = false;
+
+    public GameObject GameOverOverlay;
     public Text myX;
     public Text myY;
 
@@ -102,8 +106,11 @@ public class WorldScene : MonoBehaviour {
                     ushort x = Convert.ToUInt16(msg.GetParam(1));
                     ushort y = Convert.ToUInt16(msg.GetParam(2));
 
-                    mobs[npc_id].baseObject.x = x;
-                    mobs[npc_id].baseObject.y = y;
+                    if(mobs.ContainsKey(npc_id))
+                    {
+                        mobs[npc_id].baseObject.x = x;
+                        mobs[npc_id].baseObject.y = y;
+                    }
 
                     break;
                 }
@@ -149,11 +156,18 @@ public class WorldScene : MonoBehaviour {
             case MessageType.PLAYER_DAMAGED:
                 {
                     uint npc_id = (uint)msg.GetParam(0);
-                    uint damage = (ushort)msg.GetParam(1);
+                    ushort damage = (ushort)msg.GetParam(1);
 
-                    InputBattleTextLine(String.Format("{0}에게 공격을 받아 {1} 대미지를 입었습니다!", mobs[npc_id].baseObject.name, damage));
+                    if(mobs.ContainsKey(npc_id) == true)
+                    {
+                        InputBattleTextLine(String.Format("{0}에게 공격을 받아 {1} 대미지를 입었습니다!", mobs[npc_id].baseObject.name, damage));
+                    }
+                    else
+                    {
+                        InputBattleTextLine(String.Format("{0}에게 공격을 받아 {1} 대미지를 입었습니다!", npc_id, damage));
+                    }
 
-                    myPlayer.curr_hp -= damage;
+                    myPlayer.curr_hp -= (short)damage;
                     break;
                 }
                 
@@ -172,15 +186,17 @@ public class WorldScene : MonoBehaviour {
             case MessageType.DAMAGED_NPC:
                 {
                     uint id = Convert.ToUInt32(msg.GetParam(0));
-                    ushort hp = Convert.ToUInt16(msg.GetParam(1));
+                    short hp = Convert.ToInt16(msg.GetParam(1));
                     ushort dmg = Convert.ToUInt16(msg.GetParam(2));
-                    InputBattleTextLine(String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}", mobs[id].baseObject.name, dmg, hp));
+                    
+                    if(mobs.ContainsKey(id))
+                        InputBattleTextLine(String.Format("{0}를 공격해서 {1} 대미지를 주었습니다.남은 HP : {2}", mobs[id].baseObject.name, dmg, hp));
                     break;
                 }
 
             case MessageType.UPDATE_USER_HP:
                 {
-                    ushort hp = Convert.ToUInt16(msg.GetParam(0));
+                    short hp = Convert.ToInt16(msg.GetParam(0));
                     myPlayer.curr_hp = hp;
                     InputBattleTextLine(String.Format("체력을 회복해 {0} HP가 되었습니다.", hp));
                     break;
@@ -189,8 +205,8 @@ public class WorldScene : MonoBehaviour {
                 {
                     ushort level = Convert.ToUInt16(msg.GetParam(0));
                     ulong exp = Convert.ToUInt64(msg.GetParam(1));
-                    ushort hp = Convert.ToUInt16(msg.GetParam(2));
-                    ushort maxhp = Convert.ToUInt16(msg.GetParam(3));
+                    short hp = Convert.ToInt16(msg.GetParam(2));
+                    short maxhp = Convert.ToInt16(msg.GetParam(3));
                     ushort basedamage = Convert.ToUInt16(msg.GetParam(4));
 
                     if(myPlayer.level != level)
@@ -217,6 +233,18 @@ public class WorldScene : MonoBehaviour {
                     string message = msg.GetParam(1).ToString();
 
                     InputChatTextLine(sender + " : " + message);
+                    break;
+                }
+            case MessageType.GAMEOVER:
+                {
+                    game_start = false;
+                    GameOverOverlay.active = true;
+                    break;
+                }
+            case MessageType.RESTART:
+                {
+                    GameOverOverlay.active = false;
+                    game_start = true;
                     break;
                 }
 
@@ -279,7 +307,7 @@ public class WorldScene : MonoBehaviour {
     void Update() {
         UpdateMyPlayerUI();
 
-        //if (chatMessage.isFocused == false)
+       if (game_start == true)
         {
             if (Input.GetKeyDown(KeyCode.W))
             {
@@ -404,7 +432,7 @@ public class WorldScene : MonoBehaviour {
                     msg.Push(p.x);
                     msg.Push(p.y);
                     MessageQueue.getInstance.Enqueue(msg);
-
+                    game_start = true;
                     break;
                 }
             case ServerPacket.PacketId.ID_Notify_Player_Attack_NPC:
@@ -558,6 +586,26 @@ public class WorldScene : MonoBehaviour {
                     MessageQueue.getInstance.Enqueue(msg);
                     break;
                 }
+            case ServerPacket.PacketId.ID_Notify_Player_Die:
+                {
+                    ServerPacket.Notify_Player_Die res = (ServerPacket.Notify_Player_Die)Utility.ByteArrayToObject(data, typeof(ServerPacket.Notify_Player_Die));
+
+                    Message msg;
+
+                    if (res.restart == true)
+                    {
+                        msg = new Message(MessageType.RESTART);
+                        MessageQueue.getInstance.Enqueue(msg);
+                    }
+                    else
+                    {
+                        msg = new Message(MessageType.GAMEOVER);
+                        MessageQueue.getInstance.Enqueue(msg);
+                    }   
+
+                break;
+                }
+
             default:
                 {
                     Debug.Log("Packet " + id + "sent");

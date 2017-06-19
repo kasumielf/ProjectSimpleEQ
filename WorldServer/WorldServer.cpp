@@ -17,6 +17,7 @@ WorldServer::WorldServer(const int capacity, const short port) : BaseServer(capa
 	AttachIOCPEvent(IOCPOpType::OpPlayerAttack, std::bind(&WorldServer::PlayerAttackUpdate, this, std::placeholders::_1, this));
 	AttachIOCPEvent(IOCPOpType::OpPlayerUpdate, std::bind(&WorldServer::PlayerUpdate, this, std::placeholders::_1, this));
 	AttachIOCPEvent(IOCPOpType::OpPlayerDBSave, std::bind(&WorldServer::PlayerDBSave, this, std::placeholders::_1, this));
+	AttachIOCPEvent(IOCPOpType::OpPlayerRegen, std::bind(&WorldServer::PlayerRespawn, this, std::placeholders::_1, this));
 
 	InitStatusTable();
 }
@@ -67,7 +68,11 @@ void WorldServer::OnCloseSocket(const int id)
 	Lock();
 
 	Player *o = players[id];
-
+	if (o == nullptr)
+	{
+		Unlock();
+		return;
+	}
 	unsigned int my_id = o->GetId();
 
 	REMOVE_OBJECT closeNotify;
@@ -195,6 +200,26 @@ void WorldServer::PlayerDBSave(unsigned int id, WorldServer * self)
 	self->PushTimerEvent(60000, player_db_save_event);
 }
 
+void WorldServer::PlayerRespawn(unsigned int id, WorldServer * self)
+{
+	Player *p = self->players[id];
+
+	if (p == nullptr)
+		return;
+	
+	p->SetX(p->GetStartX());
+	p->SetY(p->GetStartY());
+	p->SetCurrentState(ObjectState::Idle);
+
+	self->world->MoveObject(p, 1);
+	self->MoveObject(p->GetSocketId(), p);
+
+	Notify_Player_Die diePacket;
+	diePacket.restart = true;
+
+	Send(p->GetSocketId(), reinterpret_cast<unsigned char*>(&diePacket));
+}
+
 void WorldServer::PlayerUpdate(unsigned int id, WorldServer * self)
 {
 	if (self->players[id] == nullptr)
@@ -202,7 +227,7 @@ void WorldServer::PlayerUpdate(unsigned int id, WorldServer * self)
 
 	Player *p = self->players[id];
 
-	if (p->GetHP() < p->GetMaxHp())
+	if (p->GetHP() < p->GetMaxHp() && p->GetCurrentState() != ObjectState::Die)
 	{
 		int val = p->GetMaxHp() * 0.1;
 		p->IncreaseHP(val);
@@ -271,7 +296,6 @@ void WorldServer::MoveObject(unsigned int sock_id, Player * p)
 
 	std::unordered_map<unsigned int, ObjectType> new_view_list;
 	std::unordered_map<unsigned int, ObjectType> del_view_list;
-
 
 	auto iter_b = world->GetPlayerBegin(sector_x, sector_y);
 	auto iter_e = world->GetPlayerEnd(sector_x, sector_y);
@@ -708,27 +732,30 @@ void WorldServer::NPCAttackPlayer(const int id, Notify_NPC_To_World_NPCAttackPla
 
 	bool player_die = false;
 	Lock();
-	unsigned short hp = p->GetHP();
+	short hp = p->GetHP();
 	hp -= damage;
 
-	if (hp <= damage)
+	if (hp <= 0)
 	{
 		hp = 1;
 
 		p->SetCurrentState(ObjectState::Die);
+		world->RemoveObject(p->GetX(), p->GetY());
 		player_die = true;
-
-		p->SetCurrentState(ObjectState::Idle);
-
-		p->SetX(p->GetStartX());
-		p->SetY(p->GetStartY());
-		world->SetSector(p, p->GetX(), p->GetY());
-
-		MoveObject(socketIds[target_id], p);
 
 		Notify_World_To_NPC_NPCStopAttackPlayer not;
 		not.npc_id = npc_id;
 		not.target_id = target_id;
+		
+		Event respawn_event;
+		respawn_event.event_type = IOCPOpType::OpPlayerRegen;
+		respawn_event.provider = socketIds[p->GetId()];
+		PushTimerEvent(30000, respawn_event);
+
+		Notify_Player_Die diePacket;
+		diePacket.restart = false;
+
+		Send(p->GetSocketId(), reinterpret_cast<unsigned char*>(&diePacket));
 		SendToInternal("NPC", reinterpret_cast<unsigned char*>(&not));
 	}
 
@@ -851,7 +878,7 @@ void WorldServer::NPCMove(const int id, Notify_NPC_To_World_NPCMove * not)
 		obj->SetY(not->y);
 
 		world->SetSector(obj, obj->GetX(), obj->GetY());
-
+		world->MoveObject(obj, 0);
 		short sec_x = obj->getCurrSectorX();
 		short sec_y = obj->getCurrSectorY();
 

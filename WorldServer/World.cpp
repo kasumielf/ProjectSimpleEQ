@@ -149,6 +149,28 @@ void World::BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WOR
 			}
 		}
 	}
+
+	for (int i = 0; i < MAX_WORLD_WIDTH; i++)
+	{
+		block[0][i][7] = true;
+		block[0][i][0] = true;
+		block[0][i][1] = true;
+
+		block[MAX_WORLD_HEIGHT - 1][i][5] = true;
+		block[MAX_WORLD_HEIGHT - 1][i][4] = true;
+		block[MAX_WORLD_HEIGHT - 1][i][3] = true;
+	}
+
+	for (int i = 0; i < MAX_WORLD_HEIGHT; i++)
+	{
+		block[i][0][7] = true;
+		block[i][0][6] = true;
+		block[i][0][5] = true;
+
+		block[i][MAX_WORLD_WIDTH - 1][1] = true;
+		block[i][MAX_WORLD_WIDTH - 1][2] = true;
+		block[i][MAX_WORLD_WIDTH - 1][3] = true;
+	}
 }
 
 void World::CreateObject(Object * obj)
@@ -186,7 +208,7 @@ void World::RemoveObject(unsigned short x, unsigned short y)
 
 bool World::MoveObject(Object * obj, const char direction)
 {
-	// 0 : UP 2: RIGHT 4 : DOWN : 6 : LEFT
+	// 0 : UP 2: RIGHT 4 : DOWN : 6 : LEFT. -1 : NONE
 
 	short from_x = obj->GetX(), from_y = obj->GetY();
 	
@@ -206,6 +228,16 @@ bool World::MoveObject(Object * obj, const char direction)
 	}
 
 	return false;
+}
+
+bool World::MoveObject(Object * obj)
+{
+	short from_x = obj->GetX(), from_y = obj->GetY();
+
+	if(world[from_y][from_x] == nullptr)
+		world[from_y][from_x] = obj;
+
+	return true;
 }
 
 void World::SetSector(Object* obj, unsigned short x, unsigned short y)

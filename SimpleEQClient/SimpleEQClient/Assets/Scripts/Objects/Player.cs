@@ -12,8 +12,8 @@ namespace Objects
         public uint level;
         public ulong exp;
 
-        public uint max_hp;
-        public uint curr_hp;
+        public short max_hp;
+        public short curr_hp;
         public uint base_damage;
 
         public Dictionary<uint, Faction> factions;

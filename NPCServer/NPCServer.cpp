@@ -68,7 +68,8 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 		unsigned int exp;
 		unsigned int max_hp;
 		unsigned int base_damage;
-		unsigned int faction_group;
+		unsigned int ally_faction;
+		unsigned int hostile_faction;
 		double respawn_time;
 
 		node = doc.FirstChild();
@@ -90,8 +91,13 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 		elem->QueryUnsignedText(&max_hp);
 		elem = node->FirstChildElement("BaseDamage");
 		elem->QueryUnsignedText(&base_damage);
-		elem = node->FirstChildElement("FactionGroup");
-		elem->QueryUnsignedText(&faction_group);
+	
+		
+		elem = node->FirstChildElement("AllyFaction");
+		elem->QueryUnsignedText(&ally_faction);
+		elem = node->FirstChildElement("HostilFaction");
+		elem->QueryUnsignedText(&hostile_faction);
+
 		elem = node->FirstChildElement("RespawnTime");
 		elem->QueryDoubleText(&respawn_time);
 
@@ -110,7 +116,10 @@ void NPCServer::CreateNPCFromResource(const char * xmlfilename, unsigned short x
 		npc->SetMaxHp(max_hp);
 		npc->SetHP(max_hp);
 		npc->SetBaseDamage(base_damage);
-		npc->SetFactionGroup(faction_group);
+
+		npc->SetAlly(ally_faction);
+		npc->SetHostile(hostile_faction);
+
 		npc->SetRespawnTime(respawn_time);
 
 		last_add_npc_id = npc_id;
@@ -127,14 +136,36 @@ void NPCServer::NPCMoveProcess(NonPlayer * npc, Object * player)
 {
 	Notify_NPC_To_World_NPCMove not;
 
-	// Move Process
+	if (npc->move_paths.size() == 0)
+	{
+		npc->target_x = player->GetX();
+		npc->target_y = player->GetY() - 1;
+		npc->MakePath(block[npc->GetY()][npc->GetX()]);
+	}
+	else
+	{
+		if (npc->target_x != player->GetX() && npc->target_y != player->GetY())
+		{
+			npc->target_x = player->GetX();
+			npc->target_y = player->GetY() - 1;
+			npc->MakePath(block[npc->GetY()][npc->GetX()]);
+		}
 
+		if (npc->move_paths.size() > 0)
+		{
+			Node* target_node = npc->move_paths.front();
+			npc->SetX(target_node->x);
+			npc->SetY(target_node->y);
 
-	not.npc_id = npc->GetId();
-	not.x = npc->GetX();
-	not.y = npc->GetY();
+			not.npc_id = npc->GetId();
+			not.x = npc->GetX();
+			not.y = npc->GetY();
 
-	SendToInternal("World", reinterpret_cast<unsigned char*>(&not));
+			npc->move_paths.pop_front();
+
+			SendToInternal("World", reinterpret_cast<unsigned char*>(&not));
+		}
+	}
 }
 
 void NPCServer::CreateNPC(NonPlayer * npc)
@@ -142,7 +173,6 @@ void NPCServer::CreateNPC(NonPlayer * npc)
 	Notify_NPC_To_World_NPCreatedAdd_NPC packet;
 
 	packet.curr_hp = npc->GetHP();
-	packet.faction_group = npc->GetFactionGroup();
 	packet.id = npc->GetId();
 	packet.level = npc->GetLevel();
 	packet.max_hp = npc->GetMaxHp();
@@ -196,11 +226,11 @@ void NPCServer::NPCAttackUpdate(unsigned int id, NPCServer * self)
 	
 		if (npc->GetCurrentState() == ObjectState::Battle)
 		{
-			unsigned short my_x = npc->GetX();
-			unsigned short my_y = npc->GetY();
+			unsigned int my_x = npc->GetX();
+			unsigned int my_y = npc->GetY();
 
-			unsigned short target_x = self->players[npc->GetAttackTarget()]->GetX();
-			unsigned short target_y = self->players[npc->GetAttackTarget()]->GetY();
+			unsigned int target_x = self->players[npc->GetAttackTarget()]->GetX();
+			unsigned int target_y = self->players[npc->GetAttackTarget()]->GetY();
 
 			if (self->IsClosed(my_x, my_y, target_x, target_y))
 			{
@@ -324,9 +354,9 @@ void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNP
 {
 	if (npcs.count(not->npc_id) > 0)
 	{
-		Lock();
 		NonPlayer *npc = npcs[not->npc_id];
 
+		Lock();
 		if (npc->GetCurrentState() == ObjectState::Idle)
 		{
 			npc->SetCurrentState(ObjectState::Battle);
@@ -337,12 +367,14 @@ void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNP
 			attack_event.event_type = IOCPOpType::OpNPCAttack;
 
 			PushTimerEvent(1000, attack_event);
-
 		}
+		Unlock();
 
 		int hp = npc->GetHP();
 
-		if (hp - not->damage <= 0)
+		hp -= not->damage;
+
+		if (hp <= 0)
 		{
 			Notify_NPC_To_World_NPCDieFromPlayer die_notify;
 			die_notify.npc_id = npc->GetId();
@@ -361,20 +393,13 @@ void NPCServer::PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNP
 
 			Send(id, reinterpret_cast<unsigned char*>(&die_notify));
 		}
-		else
-		{
-			hp -= not->damage;
+		Notify_NPC_To_World_NPCDamaged damaged_notify;
+		damaged_notify.gained_damage = not->damage;
+		damaged_notify.npc_hp = npc->GetHP();
+		damaged_notify.npc_id = npc->GetId();
 
-			Notify_NPC_To_World_NPCDamaged damaged_notify;
-			damaged_notify.gained_damage = not->damage;
-			damaged_notify.npc_hp = npc->GetHP();
-			damaged_notify.npc_id = npc->GetId();
-
-			Send(id, reinterpret_cast<unsigned char*>(&damaged_notify));
-			npc->SetHP(hp);
-		}
-
-		Unlock();
+		Send(id, reinterpret_cast<unsigned char*>(&damaged_notify));
+		npc->SetHP(hp);
 	}
 }
 
@@ -518,6 +543,28 @@ void NPCServer::BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX
 				deg += 45;
 			}
 		}
+	}
+
+	for (int i = 0; i < MAX_WORLD_WIDTH; i++)
+	{
+		block[0][i][7] = true;
+		block[0][i][0] = true;
+		block[0][i][1] = true;
+
+		block[MAX_WORLD_HEIGHT-1][i][5] = true;
+		block[MAX_WORLD_HEIGHT-1][i][4] = true;
+		block[MAX_WORLD_HEIGHT-1][i][3] = true;
+	}
+
+	for (int i = 0; i < MAX_WORLD_HEIGHT; i++)
+	{
+		block[i][0][7] = true;
+		block[i][0][6] = true;
+		block[i][0][5] = true;
+
+		block[i][MAX_WORLD_WIDTH-1][1] = true;
+		block[i][MAX_WORLD_WIDTH-1][2] = true;
+		block[i][MAX_WORLD_WIDTH-1][3] = true;
 	}
 }
 

@@ -12,4 +12,5 @@ enum class IOCPOpType
 	OpNPCUpdate,
 	OpNPCRegen,
 	OpNPCMove,
+	OpPlayerRegen,
 };
