@@ -27,43 +27,43 @@ typedef std::bitset<8> Blocks;
 class NPCServer : public BaseServer
 {
 private:
-	Blocks block[MAX_WORLD_HEIGHT][MAX_WORLD_WIDTH];
+    Blocks block[MAX_WORLD_HEIGHT][MAX_WORLD_WIDTH];
 
-	int last_add_npc_id;
+    int last_add_npc_id;
 
-	std::unordered_map<unsigned int, NonPlayer*> npcs;
-	std::unordered_map<unsigned int, NonPlayer*> regen_npcs;
-	std::unordered_map<unsigned int, Object*> players;
+    std::unordered_map<unsigned int, NonPlayer*> npcs;
+    std::unordered_map<unsigned int, NonPlayer*> regen_npcs;
+    std::unordered_map<unsigned int, Object*> players;
 
 public:
-	NPCServer(const int capacity, const short port);
-	~NPCServer();
+    NPCServer(const int capacity, const short port);
+    ~NPCServer();
 
-	void CreateNPC(NonPlayer *npc);
-	void ClearNPCs();
-	void ClearPlayers();
-	void NPCAttackUpdate(unsigned int id, NPCServer* self);
-	void NPCRegen(unsigned int id, NPCServer* self);
-	void NPCMove(unsigned int id, NPCServer* self);
+    void CreateNPC(NonPlayer *npc);
+    void ClearNPCs();
+    void ClearPlayers();
+    void NPCAttackUpdate(unsigned int id, NPCServer* self);
+    void NPCRegen(unsigned int id, NPCServer* self);
+    void NPCMove(unsigned int id, NPCServer* self);
 
-	virtual void ProcessPacket(const int id, unsigned char* packet);
-	virtual void Logging(const wchar_t* msg, ...);
-	virtual void OnCloseSocket(const int id) {}
+    virtual void ProcessPacket(const int id, unsigned char* packet);
+    virtual void Logging(const wchar_t* msg, ...);
+    virtual void OnCloseSocket(const int id) {}
 
-	void PlayerEntered(const int id, Notify_World_To_NPC_PlayerEntered * not);
-	void PlayerExit(const int id, Notify_World_To_NPC_PlayerExit * not);
-	void PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNPC * not);
-	void PlayerMove(const int id, Notify_World_To_NPC_PlayerMove * not);
-	void NPCStopAttackPlayer(const int id, Notify_World_To_NPC_NPCStopAttackPlayer * not);
-	void PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat * req);
-	
-	void CreateNPCFromResource(const char* xmlfilename, unsigned short x, unsigned short y);
-	void NPCMoveProcess(NonPlayer* npc, Object* player);
+    void PlayerEntered(const int id, Notify_World_To_NPC_PlayerEntered * not);
+    void PlayerExit(const int id, Notify_World_To_NPC_PlayerExit * not);
+    void PlayerAttackNPC(const int id, Notify_World_To_NPC_PlayerAttackNPC * not);
+    void PlayerMove(const int id, Notify_World_To_NPC_PlayerMove * not);
+    void NPCStopAttackPlayer(const int id, Notify_World_To_NPC_NPCStopAttackPlayer * not);
+    void PlayerSendMessage(const int id, Request_World_To_NPC_PlayerChat * req);
+    
+    void CreateNPCFromResource(const char* xmlfilename, unsigned short x, unsigned short y);
+    void NPCMoveProcess(NonPlayer* npc, Object* player);
 
-	bool IsClosed(short from_x, short from_y, short to_x, short to_y);
+    bool IsClosed(short from_x, short from_y, short to_x, short to_y);
 
-	std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > GetBlockDataFromBitmap(const char* filename);
-	void BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > data);
+    std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > GetBlockDataFromBitmap(const char* filename);
+    void BlockCellInit(std::array< std::array<bool, MAX_WORLD_WIDTH>, MAX_WORLD_HEIGHT > data);
 
 };
 

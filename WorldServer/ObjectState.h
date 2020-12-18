@@ -2,8 +2,8 @@
 
 enum class ObjectState
 {
-	Idle,
-	Battle,
-	Moving,
-	Die,
+    Idle,
+    Battle,
+    Moving,
+    Die,
 };

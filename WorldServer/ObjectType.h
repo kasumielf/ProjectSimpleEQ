@@ -2,8 +2,8 @@
 
 enum class ObjectType
 {
-	Player,
-	NonPlayer,
-	SolidObject,
-	MoveableObjedct,
+    Player,
+    NonPlayer,
+    SolidObject,
+    MoveableObjedct,
 };

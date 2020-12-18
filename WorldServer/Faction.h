@@ -5,8 +5,8 @@
 class Faction
 {
 private:
-	unsigned int id;
-	long value;
+    unsigned int id;
+    long value;
 
 public:
 

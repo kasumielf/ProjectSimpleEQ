@@ -15,76 +15,76 @@ extern "C"
 class NonPlayer : public Object
 {
 private:
-	unsigned int level;
-	unsigned long exp;
+    unsigned int level;
+    unsigned long exp;
 
-	short curr_hp;
-	short max_hp;
+    short curr_hp;
+    short max_hp;
 
-	unsigned int base_damage;
+    unsigned int base_damage;
 
-	unsigned short ally_faction;
-	unsigned short hostile_faction;
+    unsigned short ally_faction;
+    unsigned short hostile_faction;
 
-	double respawn_time;
+    double respawn_time;
 
-	unsigned int attack_target;
-	lua_State *l;
+    unsigned int attack_target;
+    lua_State *l;
 
-	unsigned char attack_count;
-	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> next_regen_time;
-	bool has_script = false;
-
-public:
-	AStar path_seracher;
-	Node* startNode;
-	Node* endNode;
-	std::list<Node*> move_paths;
-	unsigned int target_x;
-	unsigned int target_y;
+    unsigned char attack_count;
+    std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> next_regen_time;
+    bool has_script = false;
 
 public:
-	NonPlayer(unsigned int _id, double _rtime) : Object(_id, ObjectType::NonPlayer), respawn_time(_rtime)
-	{
-		startNode = new Node();
-		endNode = new Node();
-	}
-	~NonPlayer();
+    AStar path_seracher;
+    Node* startNode;
+    Node* endNode;
+    std::list<Node*> move_paths;
+    unsigned int target_x;
+    unsigned int target_y;
 
-	void SetLevel(unsigned int _level) { level = _level; }
-	void SetExp(unsigned long _exp) { exp = _exp; }
-	void SetHP(short _hp) { curr_hp = _hp; }
-	void SetMaxHp(short _hp) { max_hp = _hp; }
+public:
+    NonPlayer(unsigned int _id, double _rtime) : Object(_id, ObjectType::NonPlayer), respawn_time(_rtime)
+    {
+        startNode = new Node();
+        endNode = new Node();
+    }
+    ~NonPlayer();
 
-	void SetAlly(unsigned short id) { ally_faction = id; }
-	void SetHostile(unsigned short id) { ally_faction = id; }
+    void SetLevel(unsigned int _level) { level = _level; }
+    void SetExp(unsigned long _exp) { exp = _exp; }
+    void SetHP(short _hp) { curr_hp = _hp; }
+    void SetMaxHp(short _hp) { max_hp = _hp; }
 
-	void SetBaseDamage(unsigned int _dmg) { base_damage = _dmg; }
-	void SetAttackTarget(unsigned int _target) { attack_target = _target; }
-	void SetRespawnTime(double _rt) { respawn_time = _rt; }
+    void SetAlly(unsigned short id) { ally_faction = id; }
+    void SetHostile(unsigned short id) { ally_faction = id; }
 
-	const unsigned int GetLevel() { return level; }
-	const unsigned int GetExp() { return exp; }
-	const short GetHP() { return curr_hp; }
-	const short GetMaxHp() { return max_hp; }
+    void SetBaseDamage(unsigned int _dmg) { base_damage = _dmg; }
+    void SetAttackTarget(unsigned int _target) { attack_target = _target; }
+    void SetRespawnTime(double _rt) { respawn_time = _rt; }
 
-	const unsigned int GetRealDamage() { return base_damage; }
-	const double GetRespawnTime() { return respawn_time; }
-	const unsigned int GetAttackTarget() { return attack_target; }
+    const unsigned int GetLevel() { return level; }
+    const unsigned int GetExp() { return exp; }
+    const short GetHP() { return curr_hp; }
+    const short GetMaxHp() { return max_hp; }
 
-	bool IsAlly(unsigned short faction_id) { return faction_id == ally_faction; }
-	bool IsHostile(unsigned short faction_id) { return faction_id == hostile_faction; }
+    const unsigned int GetRealDamage() { return base_damage; }
+    const double GetRespawnTime() { return respawn_time; }
+    const unsigned int GetAttackTarget() { return attack_target; }
 
-	bool HasScript() { return has_script; }
-	lua_State* GetLuaState() { return l; }
-	void InitLuaScript(const char* filename);
-	void DoLuaConversation(void* server_ptr, unsigned int player, char* msg);
+    bool IsAlly(unsigned short faction_id) { return faction_id == ally_faction; }
+    bool IsHostile(unsigned short faction_id) { return faction_id == hostile_faction; }
 
-	void MakePath(std::bitset<8> &blocks);
-//	const lua_State* GetLuaState() { return ls; }
-	void SetRegenTime();
-	auto GetRegenTime() { return next_regen_time; }
-	virtual void Update();
+    bool HasScript() { return has_script; }
+    lua_State* GetLuaState() { return l; }
+    void InitLuaScript(const char* filename);
+    void DoLuaConversation(void* server_ptr, unsigned int player, char* msg);
+
+    void MakePath(std::bitset<8> &blocks);
+//    const lua_State* GetLuaState() { return ls; }
+    void SetRegenTime();
+    auto GetRegenTime() { return next_regen_time; }
+    virtual void Update();
 
 };
 

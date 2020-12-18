@@ -6,17 +6,17 @@
 class BaseSession
 {
 public:
-	OverlappedEx overlapped;
-	short id;
-	bool use;
-	unsigned char packet_buffer[MAX_PACKET_BUFFER_SIZE];
-	int recvBytes;
-	int received;
-	int sendBytes;
-	SOCKET socket;
+    OverlappedEx overlapped;
+    short id;
+    bool use;
+    unsigned char packet_buffer[MAX_PACKET_BUFFER_SIZE];
+    int recvBytes;
+    int received;
+    int sendBytes;
+    SOCKET socket;
 
 public:
-	BaseSession();
-	~BaseSession();
+    BaseSession();
+    ~BaseSession();
 };
 

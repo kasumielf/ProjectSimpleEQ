@@ -5,19 +5,19 @@
 
 
 class DBServer :
-	public BaseServer
+    public BaseServer
 {
 private:
-	DBManager m_db;
+    DBManager m_db;
 
 public:
-	DBServer(const int capacity, const short port) : BaseServer(capacity, port, false) {}
-	~DBServer() {}
+    DBServer(const int capacity, const short port) : BaseServer(capacity, port, false) {}
+    ~DBServer() {}
 
-	virtual void ProcessPacket(const int id, unsigned char* packet);
-	virtual void Logging(const wchar_t* msg, ...);
-	virtual void OnCloseSocket(const int id) {}
+    virtual void ProcessPacket(const int id, unsigned char* packet);
+    virtual void Logging(const wchar_t* msg, ...);
+    virtual void OnCloseSocket(const int id) {}
 
-	void DBConnect(const wchar_t* ip, const wchar_t* scheme, const wchar_t* id, const wchar_t* pwd);
+    void DBConnect(const wchar_t* ip, const wchar_t* scheme, const wchar_t* id, const wchar_t* pwd);
 };
 

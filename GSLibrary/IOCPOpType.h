@@ -2,15 +2,15 @@
 
 enum class IOCPOpType
 {
-	OpSend,
-	OpRecv,
-	OpPlayerAttack,
-	OpPlayerMove,
-	OpPlayerUpdate,
-	OpPlayerDBSave,
-	OpNPCAttack,
-	OpNPCUpdate,
-	OpNPCRegen,
-	OpNPCMove,
-	OpPlayerRegen,
+    OpSend,
+    OpRecv,
+    OpPlayerAttack,
+    OpPlayerMove,
+    OpPlayerUpdate,
+    OpPlayerDBSave,
+    OpNPCAttack,
+    OpNPCUpdate,
+    OpNPCRegen,
+    OpNPCMove,
+    OpPlayerRegen,
 };

@@ -3,10 +3,10 @@
 class Quest
 {
 private:
-	unsigned int quest_id;
-	bool cleared;
+    unsigned int quest_id;
+    bool cleared;
 
 public:
-	bool IsCleared() { return cleared; }
-	void SetCleared() { cleared = true; }
+    bool IsCleared() { return cleared; }
+    void SetCleared() { cleared = true; }
 };
